@@ -1,0 +1,45 @@
+============================================
+  Optimización del Entorno - Parrot Security
+  Fecha: sáb 18 jul 2026 20:55:10 -05
+============================================
+
+[1/4] Instalando stow...
+  [✓] stow ya está instalado
+
+[2/4] Enlazando dotfiles con stow...
+  [+] Backup guardado en: /home/moskov/.dotfiles_backup_20260718-205510
+UNLINK: .zshrc
+UNLINK: .p10k.zsh
+LINK: .zshrc => dotfiles/zsh/.zshrc (reverts previous action)
+LINK: .p10k.zsh => dotfiles/zsh/.p10k.zsh (reverts previous action)
+  [✓] zsh enlazado
+UNLINK: .bashrc
+UNLINK: .profile
+LINK: .bashrc => dotfiles/bash/.bashrc (reverts previous action)
+LINK: .profile => dotfiles/bash/.profile (reverts previous action)
+  [✓] bash enlazado
+WARNING! unstowing bspwm would cause conflicts:
+  * existing target is neither a link nor a directory: .config/bspwm/bspwmrc
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/WhichSystem.py
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/bspwm_resize
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/ethernet.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/restar_Ser.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/target.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/tlwn722n-monitormode.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/vpn.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/wifi.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/wifi_conect.py
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/wifi_error.log
+WARNING! stowing bspwm would cause conflicts:
+  * existing target is neither a link nor a directory: .config/bspwm/bspwmrc
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/WhichSystem.py
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/bspwm_resize
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/ethernet.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/restar_Ser.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/target.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/tlwn722n-monitormode.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/vpn.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/wifi.sh
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/wifi_conect.py
+  * existing target is neither a link nor a directory: .config/bspwm/scripts/wifi_error.log
+All operations aborted.

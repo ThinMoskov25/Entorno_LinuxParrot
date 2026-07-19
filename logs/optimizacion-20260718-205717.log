@@ -1,0 +1,240 @@
+============================================
+  Optimización del Entorno - Parrot Security
+  Fecha: sáb 18 jul 2026 20:57:17 -05
+============================================
+
+[1/4] Instalando stow...
+  [✓] stow ya está instalado
+
+[2/4] Enlazando dotfiles con stow...
+  [+] Backup guardado en: /home/moskov/.dotfiles_backup_20260718-205717
+  [✓] zsh enlazado
+  [✓] bash enlazado
+MV: .config/bspwm/bspwmrc -> dotfiles/bspwm/.config/bspwm/bspwmrc
+LINK: .config/bspwm/bspwmrc => ../../dotfiles/bspwm/.config/bspwm/bspwmrc
+MV: .config/bspwm/scripts/bspwm_resize -> dotfiles/bspwm/.config/bspwm/scripts/bspwm_resize
+LINK: .config/bspwm/scripts/bspwm_resize => ../../../dotfiles/bspwm/.config/bspwm/scripts/bspwm_resize
+MV: .config/bspwm/scripts/ethernet.sh -> dotfiles/bspwm/.config/bspwm/scripts/ethernet.sh
+LINK: .config/bspwm/scripts/ethernet.sh => ../../../dotfiles/bspwm/.config/bspwm/scripts/ethernet.sh
+MV: .config/bspwm/scripts/wifi.sh -> dotfiles/bspwm/.config/bspwm/scripts/wifi.sh
+LINK: .config/bspwm/scripts/wifi.sh => ../../../dotfiles/bspwm/.config/bspwm/scripts/wifi.sh
+MV: .config/bspwm/scripts/vpn.sh -> dotfiles/bspwm/.config/bspwm/scripts/vpn.sh
+LINK: .config/bspwm/scripts/vpn.sh => ../../../dotfiles/bspwm/.config/bspwm/scripts/vpn.sh
+MV: .config/bspwm/scripts/target.sh -> dotfiles/bspwm/.config/bspwm/scripts/target.sh
+LINK: .config/bspwm/scripts/target.sh => ../../../dotfiles/bspwm/.config/bspwm/scripts/target.sh
+MV: .config/bspwm/scripts/tlwn722n-monitormode.sh -> dotfiles/bspwm/.config/bspwm/scripts/tlwn722n-monitormode.sh
+LINK: .config/bspwm/scripts/tlwn722n-monitormode.sh => ../../../dotfiles/bspwm/.config/bspwm/scripts/tlwn722n-monitormode.sh
+MV: .config/bspwm/scripts/restar_Ser.sh -> dotfiles/bspwm/.config/bspwm/scripts/restar_Ser.sh
+LINK: .config/bspwm/scripts/restar_Ser.sh => ../../../dotfiles/bspwm/.config/bspwm/scripts/restar_Ser.sh
+MV: .config/bspwm/scripts/wifi_conect.py -> dotfiles/bspwm/.config/bspwm/scripts/wifi_conect.py
+LINK: .config/bspwm/scripts/wifi_conect.py => ../../../dotfiles/bspwm/.config/bspwm/scripts/wifi_conect.py
+MV: .config/bspwm/scripts/wifi_error.log -> dotfiles/bspwm/.config/bspwm/scripts/wifi_error.log
+LINK: .config/bspwm/scripts/wifi_error.log => ../../../dotfiles/bspwm/.config/bspwm/scripts/wifi_error.log
+MV: .config/bspwm/scripts/WhichSystem.py -> dotfiles/bspwm/.config/bspwm/scripts/WhichSystem.py
+LINK: .config/bspwm/scripts/WhichSystem.py => ../../../dotfiles/bspwm/.config/bspwm/scripts/WhichSystem.py
+  [✓] bspwm enlazado
+MV: .config/sxhkd/sxhkdrc -> dotfiles/sxhkd/.config/sxhkd/sxhkdrc
+LINK: .config/sxhkd/sxhkdrc => ../../dotfiles/sxhkd/.config/sxhkd/sxhkdrc
+  [✓] sxhkd enlazado
+MV: .config/kitty/color.ini -> dotfiles/kitty/.config/kitty/color.ini
+LINK: .config/kitty/color.ini => ../../dotfiles/kitty/.config/kitty/color.ini
+MV: .config/kitty/kitty.conf -> dotfiles/kitty/.config/kitty/kitty.conf
+LINK: .config/kitty/kitty.conf => ../../dotfiles/kitty/.config/kitty/kitty.conf
+  [✓] kitty enlazado
+MV: .config/picom/picom.conf -> dotfiles/picom/.config/picom/picom.conf
+LINK: .config/picom/picom.conf => ../../dotfiles/picom/.config/picom/picom.conf
+  [✓] picom enlazado
+MV: .config/polybar/colors_dark.ini -> dotfiles/polybar/.config/polybar/colors_dark.ini
+LINK: .config/polybar/colors_dark.ini => ../../dotfiles/polybar/.config/polybar/colors_dark.ini
+MV: .config/polybar/colors.ini -> dotfiles/polybar/.config/polybar/colors.ini
+LINK: .config/polybar/colors.ini => ../../dotfiles/polybar/.config/polybar/colors.ini
+MV: .config/polybar/colors_light.ini -> dotfiles/polybar/.config/polybar/colors_light.ini
+LINK: .config/polybar/colors_light.ini => ../../dotfiles/polybar/.config/polybar/colors_light.ini
+MV: .config/polybar/config -> dotfiles/polybar/.config/polybar/config
+LINK: .config/polybar/config => ../../dotfiles/polybar/.config/polybar/config
+MV: .config/polybar/current.ini -> dotfiles/polybar/.config/polybar/current.ini
+LINK: .config/polybar/current.ini => ../../dotfiles/polybar/.config/polybar/current.ini
+MV: .config/polybar/fonts/Helvetica.ttf -> dotfiles/polybar/.config/polybar/fonts/Helvetica.ttf
+LINK: .config/polybar/fonts/Helvetica.ttf => ../../../dotfiles/polybar/.config/polybar/fonts/Helvetica.ttf
+MV: .config/polybar/fonts/Helvetica_Bold.ttf -> dotfiles/polybar/.config/polybar/fonts/Helvetica_Bold.ttf
+LINK: .config/polybar/fonts/Helvetica_Bold.ttf => ../../../dotfiles/polybar/.config/polybar/fonts/Helvetica_Bold.ttf
+MV: .config/polybar/fonts/Helvetica_BoldOblique.ttf -> dotfiles/polybar/.config/polybar/fonts/Helvetica_BoldOblique.ttf
+LINK: .config/polybar/fonts/Helvetica_BoldOblique.ttf => ../../../dotfiles/polybar/.config/polybar/fonts/Helvetica_BoldOblique.ttf
+MV: .config/polybar/fonts/HurmitNerdFontComplete_Mono.otf -> dotfiles/polybar/.config/polybar/fonts/HurmitNerdFontComplete_Mono.otf
+LINK: .config/polybar/fonts/HurmitNerdFontComplete_Mono.otf => ../../../dotfiles/polybar/.config/polybar/fonts/HurmitNerdFontComplete_Mono.otf
+MV: .config/polybar/fonts/Iosevka Nerd Font Complete.ttf -> dotfiles/polybar/.config/polybar/fonts/Iosevka Nerd Font Complete.ttf
+LINK: .config/polybar/fonts/Iosevka Nerd Font Complete.ttf => ../../../dotfiles/polybar/.config/polybar/fonts/Iosevka Nerd Font Complete.ttf
+MV: .config/polybar/fonts/feather.ttf -> dotfiles/polybar/.config/polybar/fonts/feather.ttf
+LINK: .config/polybar/fonts/feather.ttf => ../../../dotfiles/polybar/.config/polybar/fonts/feather.ttf
+MV: .config/polybar/fonts/helvetica_compressed_5871d14b6903a.otf -> dotfiles/polybar/.config/polybar/fonts/helvetica_compressed_5871d14b6903a.otf
+LINK: .config/polybar/fonts/helvetica_compressed_5871d14b6903a.otf => ../../../dotfiles/polybar/.config/polybar/fonts/helvetica_compressed_5871d14b6903a.otf
+MV: .config/polybar/fonts/helvetica_light_587ebe5a59211.ttf -> dotfiles/polybar/.config/polybar/fonts/helvetica_light_587ebe5a59211.ttf
+LINK: .config/polybar/fonts/helvetica_light_587ebe5a59211.ttf => ../../../dotfiles/polybar/.config/polybar/fonts/helvetica_light_587ebe5a59211.ttf
+MV: .config/polybar/fonts/helvetica_rounded_bold_5871d05ead8de.otf -> dotfiles/polybar/.config/polybar/fonts/helvetica_rounded_bold_5871d05ead8de.otf
+LINK: .config/polybar/fonts/helvetica_rounded_bold_5871d05ead8de.otf => ../../../dotfiles/polybar/.config/polybar/fonts/helvetica_rounded_bold_5871d05ead8de.otf
+MV: .config/polybar/launch.sh -> dotfiles/polybar/.config/polybar/launch.sh
+LINK: .config/polybar/launch.sh => ../../dotfiles/polybar/.config/polybar/launch.sh
+MV: .config/polybar/scripts/launcher -> dotfiles/polybar/.config/polybar/scripts/launcher
+LINK: .config/polybar/scripts/launcher => ../../../dotfiles/polybar/.config/polybar/scripts/launcher
+MV: .config/polybar/scripts/powermenu -> dotfiles/polybar/.config/polybar/scripts/powermenu
+LINK: .config/polybar/scripts/powermenu => ../../../dotfiles/polybar/.config/polybar/scripts/powermenu
+MV: .config/polybar/scripts/powermenu_alt -> dotfiles/polybar/.config/polybar/scripts/powermenu_alt
+LINK: .config/polybar/scripts/powermenu_alt => ../../../dotfiles/polybar/.config/polybar/scripts/powermenu_alt
+MV: .config/polybar/scripts/themes/colors.rasi -> dotfiles/polybar/.config/polybar/scripts/themes/colors.rasi
+LINK: .config/polybar/scripts/themes/colors.rasi => ../../../../dotfiles/polybar/.config/polybar/scripts/themes/colors.rasi
+MV: .config/polybar/scripts/themes/colors_dark.rasi -> dotfiles/polybar/.config/polybar/scripts/themes/colors_dark.rasi
+LINK: .config/polybar/scripts/themes/colors_dark.rasi => ../../../../dotfiles/polybar/.config/polybar/scripts/themes/colors_dark.rasi
+MV: .config/polybar/scripts/themes/colors_light.rasi -> dotfiles/polybar/.config/polybar/scripts/themes/colors_light.rasi
+LINK: .config/polybar/scripts/themes/colors_light.rasi => ../../../../dotfiles/polybar/.config/polybar/scripts/themes/colors_light.rasi
+MV: .config/polybar/scripts/themes/launcher.rasi -> dotfiles/polybar/.config/polybar/scripts/themes/launcher.rasi
+LINK: .config/polybar/scripts/themes/launcher.rasi => ../../../../dotfiles/polybar/.config/polybar/scripts/themes/launcher.rasi
+MV: .config/polybar/scripts/themes/powermenu.rasi -> dotfiles/polybar/.config/polybar/scripts/themes/powermenu.rasi
+LINK: .config/polybar/scripts/themes/powermenu.rasi => ../../../../dotfiles/polybar/.config/polybar/scripts/themes/powermenu.rasi
+MV: .config/polybar/scripts/themes/powermenu_alt.rasi -> dotfiles/polybar/.config/polybar/scripts/themes/powermenu_alt.rasi
+LINK: .config/polybar/scripts/themes/powermenu_alt.rasi => ../../../../dotfiles/polybar/.config/polybar/scripts/themes/powermenu_alt.rasi
+MV: .config/polybar/workspace.ini -> dotfiles/polybar/.config/polybar/workspace.ini
+LINK: .config/polybar/workspace.ini => ../../dotfiles/polybar/.config/polybar/workspace.ini
+  [✓] polybar enlazado
+MV: .config/rofi/config.rasi -> dotfiles/rofi/.config/rofi/config.rasi
+LINK: .config/rofi/config.rasi => ../../dotfiles/rofi/.config/rofi/config.rasi
+MV: .config/rofi/themes/launchpad.rasi -> dotfiles/rofi/.config/rofi/themes/launchpad.rasi
+LINK: .config/rofi/themes/launchpad.rasi => ../../../dotfiles/rofi/.config/rofi/themes/launchpad.rasi
+MV: .config/rofi/themes/nord-oneline.rasi -> dotfiles/rofi/.config/rofi/themes/nord-oneline.rasi
+LINK: .config/rofi/themes/nord-oneline.rasi => ../../../dotfiles/rofi/.config/rofi/themes/nord-oneline.rasi
+MV: .config/rofi/themes/nord.rasi -> dotfiles/rofi/.config/rofi/themes/nord.rasi
+LINK: .config/rofi/themes/nord.rasi => ../../../dotfiles/rofi/.config/rofi/themes/nord.rasi
+MV: .config/rofi/themes/nord-twoLines.rasi -> dotfiles/rofi/.config/rofi/themes/nord-twoLines.rasi
+LINK: .config/rofi/themes/nord-twoLines.rasi => ../../../dotfiles/rofi/.config/rofi/themes/nord-twoLines.rasi
+MV: .config/rofi/themes/rounded-blue-dark.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-blue-dark.rasi
+LINK: .config/rofi/themes/rounded-blue-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-blue-dark.rasi
+MV: .config/rofi/themes/rounded-gray-dark.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-gray-dark.rasi
+LINK: .config/rofi/themes/rounded-gray-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-gray-dark.rasi
+MV: .config/rofi/themes/rounded-green-dark.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-green-dark.rasi
+LINK: .config/rofi/themes/rounded-green-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-green-dark.rasi
+MV: .config/rofi/themes/rounded-nord-dark.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-nord-dark.rasi
+LINK: .config/rofi/themes/rounded-nord-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-nord-dark.rasi
+MV: .config/rofi/themes/rounded-orange-dark.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-orange-dark.rasi
+LINK: .config/rofi/themes/rounded-orange-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-orange-dark.rasi
+MV: .config/rofi/themes/rounded-pink-dark.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-pink-dark.rasi
+LINK: .config/rofi/themes/rounded-pink-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-pink-dark.rasi
+MV: .config/rofi/themes/rounded-purple-dark.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-purple-dark.rasi
+LINK: .config/rofi/themes/rounded-purple-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-purple-dark.rasi
+MV: .config/rofi/themes/rounded-red-dark.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-red-dark.rasi
+LINK: .config/rofi/themes/rounded-red-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-red-dark.rasi
+MV: .config/rofi/themes/rounded-white.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-white.rasi
+LINK: .config/rofi/themes/rounded-white.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-white.rasi
+MV: .config/rofi/themes/rounded-yellow-dark.rasi -> dotfiles/rofi/.config/rofi/themes/rounded-yellow-dark.rasi
+LINK: .config/rofi/themes/rounded-yellow-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/rounded-yellow-dark.rasi
+MV: .config/rofi/themes/simple-tokyonight.rasi -> dotfiles/rofi/.config/rofi/themes/simple-tokyonight.rasi
+LINK: .config/rofi/themes/simple-tokyonight.rasi => ../../../dotfiles/rofi/.config/rofi/themes/simple-tokyonight.rasi
+MV: .config/rofi/themes/spotlight-dark.rasi -> dotfiles/rofi/.config/rofi/themes/spotlight-dark.rasi
+LINK: .config/rofi/themes/spotlight-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/spotlight-dark.rasi
+MV: .config/rofi/themes/spotlight.rasi -> dotfiles/rofi/.config/rofi/themes/spotlight.rasi
+LINK: .config/rofi/themes/spotlight.rasi => ../../../dotfiles/rofi/.config/rofi/themes/spotlight.rasi
+MV: .config/rofi/themes/squared-everforest.rasi -> dotfiles/rofi/.config/rofi/themes/squared-everforest.rasi
+LINK: .config/rofi/themes/squared-everforest.rasi => ../../../dotfiles/rofi/.config/rofi/themes/squared-everforest.rasi
+MV: .config/rofi/themes/squared-material-red.rasi -> dotfiles/rofi/.config/rofi/themes/squared-material-red.rasi
+LINK: .config/rofi/themes/squared-material-red.rasi => ../../../dotfiles/rofi/.config/rofi/themes/squared-material-red.rasi
+MV: .config/rofi/themes/squared-nord.rasi -> dotfiles/rofi/.config/rofi/themes/squared-nord.rasi
+LINK: .config/rofi/themes/squared-nord.rasi => ../../../dotfiles/rofi/.config/rofi/themes/squared-nord.rasi
+MV: .config/rofi/themes/windows11-grid-dark.rasi -> dotfiles/rofi/.config/rofi/themes/windows11-grid-dark.rasi
+LINK: .config/rofi/themes/windows11-grid-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/windows11-grid-dark.rasi
+MV: .config/rofi/themes/windows11-grid-light.rasi -> dotfiles/rofi/.config/rofi/themes/windows11-grid-light.rasi
+LINK: .config/rofi/themes/windows11-grid-light.rasi => ../../../dotfiles/rofi/.config/rofi/themes/windows11-grid-light.rasi
+MV: .config/rofi/themes/windows11-list-dark.rasi -> dotfiles/rofi/.config/rofi/themes/windows11-list-dark.rasi
+LINK: .config/rofi/themes/windows11-list-dark.rasi => ../../../dotfiles/rofi/.config/rofi/themes/windows11-list-dark.rasi
+MV: .config/rofi/themes/windows11-list-light.rasi -> dotfiles/rofi/.config/rofi/themes/windows11-list-light.rasi
+LINK: .config/rofi/themes/windows11-list-light.rasi => ../../../dotfiles/rofi/.config/rofi/themes/windows11-list-light.rasi
+  [✓] rofi enlazado
+MV: .config/nvim/init.lua -> dotfiles/nvim/.config/nvim/init.lua
+LINK: .config/nvim/init.lua => ../../dotfiles/nvim/.config/nvim/init.lua
+MV: .config/nvim/lazy-lock.json -> dotfiles/nvim/.config/nvim/lazy-lock.json
+LINK: .config/nvim/lazy-lock.json => ../../dotfiles/nvim/.config/nvim/lazy-lock.json
+MV: .config/nvim/LICENSE -> dotfiles/nvim/.config/nvim/LICENSE
+LINK: .config/nvim/LICENSE => ../../dotfiles/nvim/.config/nvim/LICENSE
+MV: .config/nvim/lua/chadrc.lua -> dotfiles/nvim/.config/nvim/lua/chadrc.lua
+LINK: .config/nvim/lua/chadrc.lua => ../../../dotfiles/nvim/.config/nvim/lua/chadrc.lua
+MV: .config/nvim/lua/configs/conform.lua -> dotfiles/nvim/.config/nvim/lua/configs/conform.lua
+LINK: .config/nvim/lua/configs/conform.lua => ../../../../dotfiles/nvim/.config/nvim/lua/configs/conform.lua
+MV: .config/nvim/lua/configs/lazy.lua -> dotfiles/nvim/.config/nvim/lua/configs/lazy.lua
+LINK: .config/nvim/lua/configs/lazy.lua => ../../../../dotfiles/nvim/.config/nvim/lua/configs/lazy.lua
+MV: .config/nvim/lua/configs/lspconfig.lua -> dotfiles/nvim/.config/nvim/lua/configs/lspconfig.lua
+LINK: .config/nvim/lua/configs/lspconfig.lua => ../../../../dotfiles/nvim/.config/nvim/lua/configs/lspconfig.lua
+MV: .config/nvim/lua/mappings.lua -> dotfiles/nvim/.config/nvim/lua/mappings.lua
+LINK: .config/nvim/lua/mappings.lua => ../../../dotfiles/nvim/.config/nvim/lua/mappings.lua
+MV: .config/nvim/lua/options.lua -> dotfiles/nvim/.config/nvim/lua/options.lua
+LINK: .config/nvim/lua/options.lua => ../../../dotfiles/nvim/.config/nvim/lua/options.lua
+MV: .config/nvim/lua/plugins/init.lua -> dotfiles/nvim/.config/nvim/lua/plugins/init.lua
+LINK: .config/nvim/lua/plugins/init.lua => ../../../../dotfiles/nvim/.config/nvim/lua/plugins/init.lua
+MV: .config/nvim/README.md -> dotfiles/nvim/.config/nvim/README.md
+LINK: .config/nvim/README.md => ../../dotfiles/nvim/.config/nvim/README.md
+  [✓] nvim enlazado
+MV: .config/neofetch/config.conf -> dotfiles/neofetch/.config/neofetch/config.conf
+LINK: .config/neofetch/config.conf => ../../dotfiles/neofetch/.config/neofetch/config.conf
+  [✓] neofetch enlazado
+Actualizadas 77 rutas desde el índice
+  [+] Archivos del repo restaurados tras adopt
+
+[3/4] Configurando firewall UFW...
+Backing up 'user.rules' to '/etc/ufw/user.rules.20260718_205718'
+Backing up 'before.rules' to '/etc/ufw/before.rules.20260718_205718'
+Backing up 'after.rules' to '/etc/ufw/after.rules.20260718_205718'
+Backing up 'user6.rules' to '/etc/ufw/user6.rules.20260718_205718'
+Backing up 'before6.rules' to '/etc/ufw/before6.rules.20260718_205718'
+Backing up 'after6.rules' to '/etc/ufw/after6.rules.20260718_205718'
+
+Default incoming policy changed to 'deny'
+(be sure to update your rules accordingly)
+Default outgoing policy changed to 'allow'
+(be sure to update your rules accordingly)
+Rules updated
+Rules updated (v6)
+Rules updated
+Rules updated (v6)
+Rules updated
+Rules updated (v6)
+Rules updated
+Rules updated (v6)
+Rules updated
+Rules updated (v6)
+Logging enabled
+Firewall is active and enabled on system startup
+  [✓] UFW configurado y activado
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+Anywhere on lo             ALLOW IN    Anywhere                  
+22/tcp                     ALLOW IN    Anywhere                   # SSH
+7070/tcp                   ALLOW IN    Anywhere                   # AnyDesk
+1194/udp                   ALLOW IN    Anywhere                   # OpenVPN
+51820/udp                  ALLOW IN    Anywhere                   # WireGuard
+Anywhere (v6) on lo        ALLOW IN    Anywhere (v6)             
+22/tcp (v6)                ALLOW IN    Anywhere (v6)              # SSH
+7070/tcp (v6)              ALLOW IN    Anywhere (v6)              # AnyDesk
+1194/udp (v6)              ALLOW IN    Anywhere (v6)              # OpenVPN
+51820/udp (v6)             ALLOW IN    Anywhere (v6)              # WireGuard
+
+
+[4/4] Reiniciando picom y sxhkd...
+  [✓] picom reiniciado con use-damage=true
+[ 18/07/26 20:57:22.524 main FATAL ERROR ] Can't open display.
+  [✓] sxhkd recargado
+
+============================================
+  COMPLETADO
+============================================
+
+  [✓] stow instalado y dotfiles enlazados
+  [✓] UFW activo (deny incoming, allow outgoing)
+  [✓] Picom reiniciado con optimización GPU
+  [✓] sxhkd recargado con paths portables
+
+  Log guardado en: /home/moskov/Documentos/OptimizacionEntorno/logs/optimizacion-20260718-205717.log
+
+  Si algo falla, restaura con:
+    sudo timeshift --restore
+============================================
