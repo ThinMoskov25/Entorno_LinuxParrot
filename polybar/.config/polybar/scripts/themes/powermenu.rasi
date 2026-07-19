@@ -1,82 +1,67 @@
 configuration {
-    font:                           "Iosevka Nerd Font 10";
+    font:                           "HackNerdFont 11";
     show-icons:                     false;
-	icon-theme: 					"Papirus";
-    display-drun: 					":";
+    display-drun:                   ":";
     drun-display-format:            "{name}";
-    threads:                        0;
-    scroll-method:                  0;
     disable-history:                false;
     fullscreen:                     false;
-	hide-scrollbar: 				true;
-	sidebar-mode: 					false;
-    location:                       7;
+    hide-scrollbar:                 true;
+    sidebar-mode:                   false;
+    location:                       3;
 }
 
-@import "colors.rasi"
+* {
+    background:                     #2b2b3dff;
+    background-alt:                 #363649ff;
+    foreground:                     #ffffffff;
+    selected:                       #5895DCff;
+    urgent:                         #EC407Aff;
+    border:                         #5895DCff;
+}
 
 window {
     transparency:                   "real";
     background-color:               @background;
     text-color:                     @foreground;
-    border-radius:                  20px;
-    height:                         27%;
-    width:                          17%;
-    x-offset:                       30;
-    y-offset:                       -90;
+    border-radius:                  15px;
+    height:                         230px;
+    width:                          180px;
+    x-offset:                       -15;
+    y-offset:                       45;
 }
 
 prompt {
-    enabled: 						true;
-	padding: 						4px 4px 6px 6px;
-	background-color: 				@background;
-	text-color: 					@foreground;
+    enabled:                        true;
+    padding:                        6px 6px 6px 6px;
+    background-color:               @background;
+    text-color:                     @foreground;
 }
 
 textbox-prompt-colon {
-	expand: 						false;
-	str: 							"";
+    expand:                         false;
+    str:                            " System";
     background-color:               @background;
-    text-color:                     @logo;
-    padding:                        5px 0px 0px 10px;
-	font:							"feather 10";
+    text-color:                     @selected;
+    padding:                        6px 6px 6px 12px;
+    font:                           "HackNerdFont 11";
 }
 
 inputbar {
-	children: 						[ textbox-prompt-colon, prompt ];
+    children:                       [ textbox-prompt-colon ];
     background-color:               @background;
     text-color:                     @foreground;
     expand:                         false;
-    border:                  		0px 0px 1px 0px;
-    border-radius:                  20px;
-    border-color:                  	@border;
+    border:                         0px 0px 1px 0px;
+    border-radius:                  0px;
+    border-color:                   @background-alt;
     margin:                         0px 0px 0px 0px;
-    padding:                        0px 0px 0px 0px;
-    position:                       center;
+    padding:                        0px 0px 4px 0px;
 }
-
-
-entry {
-    background-color:               @background;
-    text-color:                     @foreground;
-    placeholder-color:              @foreground;
-    expand:                         true;
-    horizontal-align:               0;
-    placeholder:                    "Search";
-    blink:                          true;
-    padding:                        4px 0px 0px 0px;
-}
-
-case-indicator {
-    background-color:               @background;
-    text-color:                     @foreground;
-    spacing:                        0;
-}
-
 
 listview {
     background-color:               @background;
     columns:                        1;
+    lines:                          5;
     spacing:                        4px;
     cycle:                          true;
     dynamic:                        true;
@@ -86,35 +71,31 @@ listview {
 mainbox {
     background-color:               @background;
     children:                       [ inputbar, listview ];
-    spacing:                       	5px;
-    padding:                        5px 5px 5px 5px;
+    spacing:                        8px;
+    padding:                        10px 10px 10px 10px;
 }
 
 element {
     background-color:               @background;
     text-color:                     @foreground;
     orientation:                    horizontal;
-    border-radius:                  4px;
-    padding:                        6px 6px 6px 6px;
-}
-
-element-icon {
-    size:                           24px;
-    border:                         0px;
+    border-radius:                  8px;
+    padding:                        8px 8px 8px 12px;
 }
 
 element-text {
     expand:                         true;
     horizontal-align:               0;
-    vertical-align:                 0;
-    margin:                         2px 0px 2px 2px;
+    vertical-align:                 0.5;
+    background-color:               inherit;
+    text-color:                     inherit;
 }
 
 element normal.urgent,
 element alternate.urgent {
     background-color:               @urgent;
     text-color:                     @foreground;
-    border-radius:                  9px;
+    border-radius:                  8px;
 }
 
 element normal.active,
@@ -125,10 +106,9 @@ element alternate.active {
 
 element selected {
     background-color:               @selected;
-    text-color:                     @background;
-    border:                  		0px;
-    border-radius:                  20px;
-    border-color:                  	@border;
+    text-color:                     @foreground;
+    border:                         0px;
+    border-radius:                  8px;
 }
 
 element selected.urgent {
@@ -137,6 +117,6 @@ element selected.urgent {
 }
 
 element selected.active {
-    background-color:               @background-alt;
-    color:                          @foreground;
+    background-color:               @selected;
+    text-color:                     @foreground;
 }

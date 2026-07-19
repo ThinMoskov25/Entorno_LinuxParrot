@@ -163,4 +163,26 @@ extractPorts () {
 
 alias cdm='cd $HOME/Desktop/Moskov/Ciberseguridad'
 
+# Info Batería + Fecha/Hora (verde en terminal)
+
+infbat() {
+    BAT_PATH="/sys/class/power_supply/BAT0"
+    if [ -f "$BAT_PATH/capacity" ]; then
+        capacity=$(cat "$BAT_PATH/capacity")
+        bat_status=$(cat "$BAT_PATH/status")
+        if [ "$bat_status" = "Charging" ]; then
+            icon=" Charging"
+        elif [ "$bat_status" = "Full" ]; then
+            icon=" Full"
+        else
+            icon=" Discharging"
+        fi
+        bat_info="$icon $capacity%%"
+    else
+        bat_info="No battery detected"
+    fi
+    datetime=$(date "+%A %d/%m/%Y  %H:%M:%S")
+    echo -e "\033[0;32m  $datetime  |  $bat_info\033[0m"
+}
+
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
