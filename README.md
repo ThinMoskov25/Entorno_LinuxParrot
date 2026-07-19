@@ -22,6 +22,71 @@ Copia_Entorno/
 └── neofetch/               # Config de neofetch
 ```
 
+---
+
+## Funciones Personalizadas
+
+Funciones disponibles en el shell (definidas en `.zshrc`). Se ejecutan escribiendo el nombre en la terminal.
+
+| Funcion | Uso | Descripcion |
+|---------|-----|-------------|
+| `settarget` | `settarget 10.10.10.1 MiMaquina` | Guarda la IP y nombre del target actual para pentesting. Se muestra en polybar. |
+| `cleartarget` | `cleartarget` | Limpia el target actual (polybar muestra "No target"). |
+| `extractPorts` | `extractPorts allPorts.gnmap` | Extrae puertos abiertos de un escaneo nmap, los muestra con formato y los copia al clipboard. |
+| `whichsystem` | `whichsystem 10.10.10.1` | Identifica el sistema operativo de un host basandose en el TTL (Linux/Windows). |
+| `mkt` | `mkt` | Crea la estructura de carpetas estandar para pentesting: nmap, content, scripts, vpn. |
+| `wificonect` | `wificonect` | Ejecuta script Python para conectarse a una red WiFi. |
+| `wifiscan` | `wifiscan` | Pone el adaptador TL-WN722N en modo monitor para escaneo WiFi. |
+| `resnet` | `resnet` | Reinicia los servicios de red del sistema. |
+| `infbat` | `infbat` | Muestra fecha, hora y estado de bateria (porcentaje + cargando/descargando) en verde. |
+
+---
+
+## Comandos Globales
+
+Comandos disponibles desde cualquier directorio (instalados en `/usr/local/bin/`).
+
+| Comando | Descripcion |
+|---------|-------------|
+| `update` | Crea un snapshot con Timeshift + actualiza el sistema con `parrot-upgrade`. Logs en `~/Desktop/Moskov/Apps/Update/logs/`. |
+
+---
+
+## Aliases
+
+| Alias | Equivale a | Descripcion |
+|-------|-----------|-------------|
+| `cat` | `bat` | Visor de archivos con syntax highlighting |
+| `catn` | `bat --style=plain` | Cat sin decoraciones |
+| `catnp` | `bat --style=plain --paging=never` | Cat sin paginador |
+| `ls` | `lsd --group-dirs=first` | Listado con iconos |
+| `ll` | `lsd -lh --group-dirs=first` | Listado largo |
+| `la` | `lsd -a --group-dirs=first` | Listado incluyendo ocultos |
+| `lla` | `lsd -lha --group-dirs=first` | Listado largo + ocultos |
+| `cdm` | `cd $HOME/Desktop/Moskov/Ciberseguridad` | Ir al directorio de trabajo principal |
+
+---
+
+## Atajos de Teclado (sxhkd)
+
+| Atajo | Accion |
+|-------|--------|
+| `Super + Return` | Abrir Kitty (terminal) |
+| `Super + d` | Abrir Rofi (launcher) |
+| `Super + q` | Cerrar ventana |
+| `Super + f` | Fullscreen |
+| `Super + s` | Floating |
+| `Super + t` | Tiled |
+| `Super + m` | Monocle layout |
+| `Super + Flechas` | Mover foco |
+| `Super + Shift + Flechas` | Mover ventana |
+| `Super + Alt + Flechas` | Redimensionar ventana |
+| `Super + Alt + q` | Salir de bspwm |
+| `Super + Alt + r` | Reiniciar bspwm |
+| `Super + Escape` | Recargar sxhkd |
+
+---
+
 ## Uso rapido
 
 ### Reinstalar entorno completo en una maquina nueva
