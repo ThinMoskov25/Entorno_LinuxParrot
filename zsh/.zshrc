@@ -164,8 +164,8 @@ extractPorts () {
 alias cdm='cd $HOME/Desktop/Moskov/Ciberseguridad'
 
 # Servicios de red (aplicativos interactivos)
-alias startftp='bash $HOME/Desktop/Moskov/Ciberseguridad/Tools/Ciberseguridad/Scripts/startftp.sh'
-alias startssh='bash $HOME/Desktop/Moskov/Ciberseguridad/Tools/Ciberseguridad/Scripts/startssh.sh'
+alias startftp='bash /home/moskov/Desktop/Moskov/Ciberseguridad/01_Scripts/servicios/startftp.sh'
+alias startssh='bash /home/moskov/Desktop/Moskov/Ciberseguridad/01_Scripts/servicios/startssh.sh'
 
 # Info Batería + Fecha/Hora (verde en terminal)
 

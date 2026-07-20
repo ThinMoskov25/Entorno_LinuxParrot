@@ -250,13 +250,29 @@ log "  UFW configurado y activo"
 log "Creando estructura de carpetas..."
 
 su - "$USUARIO" -c "
-mkdir -p ~/Desktop/Moskov/{Apps,Ciberseguridad/{Documentos,Estudio,Local_Services,Tools,VPN},Fondo_Pantalla,Kiro}
-mkdir -p ~/Desktop/Moskov/Ciberseguridad/Tools/{AllTools,Auto_Tools,CellPhone-Tools,Escaneo,Herramientas,Ngrok,Phishing,Wifi_Conect}
-mkdir -p ~/Desktop/Moskov/Ciberseguridad/Estudio/{Clases_Python,Laboratorios,Maquinas_HTB,Network_Drive}
-mkdir -p ~/Desktop/Moskov/Apps/Update/logs
+mkdir -p ~/Desktop/Moskov/{Apps/Update/logs,Fondo_Pantalla,Kiro}
+mkdir -p ~/Desktop/Moskov/Ciberseguridad/{01_Scripts/{python,bash,servicios,generadores,go},02_Laboratorios/{Redes/capturas,HTB,Network_Drive},03_Herramientas/{Escaneo,WiFi,Phishing,Movil,OSINT,Instaladores},04_Servicios/{SMTP/logs,FTP/logs,SSH},05_Wordlists,06_Documentos,07_VPN/{HTB,TPLink}}
+mkdir -p ~/Desktop/FTP_Share
 mkdir -p ~/Documentos/OptimizacionEntorno/logs
 mkdir -p ~/.config/bin
 " >> "$LOG_FILE" 2>&1
+
+# Copiar scripts de estudio desde el repo
+SCRIPTS_SRC="$DOTFILES_DIR/scripts_estudio"
+SCRIPTS_DST="$HOME_DIR/Desktop/Moskov/Ciberseguridad/01_Scripts"
+if [ -d "$SCRIPTS_SRC" ]; then
+    cp -r "$SCRIPTS_SRC/python/"* "$SCRIPTS_DST/python/" 2>/dev/null
+    cp -r "$SCRIPTS_SRC/bash/"* "$SCRIPTS_DST/bash/" 2>/dev/null
+    cp -r "$SCRIPTS_SRC/servicios/"* "$SCRIPTS_DST/servicios/" 2>/dev/null
+    cp -r "$SCRIPTS_SRC/generadores/"* "$SCRIPTS_DST/generadores/" 2>/dev/null
+    chmod +x "$SCRIPTS_DST/servicios/"*.sh 2>/dev/null
+    chmod +x "$SCRIPTS_DST/bash/"*.sh 2>/dev/null
+    log "  Scripts de estudio copiados"
+fi
+
+# Copiar configs SMTP
+cp "$SCRIPTS_SRC/smtp_conf2.py" "$HOME_DIR/Desktop/Moskov/Ciberseguridad/04_Servicios/SMTP/conf2.py" 2>/dev/null
+cp "$SCRIPTS_SRC/smtp_crear_pass.py" "$HOME_DIR/Desktop/Moskov/Ciberseguridad/04_Servicios/SMTP/crear_pass.py" 2>/dev/null
 
 log "  Estructura de carpetas creada"
 
