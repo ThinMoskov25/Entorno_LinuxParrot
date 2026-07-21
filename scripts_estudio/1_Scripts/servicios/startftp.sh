@@ -17,7 +17,7 @@ DIM="\033[2m"     # Dim
 RST="\033[0m"     # Reset
 
 # Directorio de trabajo (Estándar: Conexiones Servicios)
-CONEXIONES_ROOT="/home/moskov/Desktop/Moskov/Ciberseguridad/04_Servicios/Conexiones Servicios"
+CONEXIONES_ROOT="/home/moskov/Desktop/Moskov/Ciberseguridad/4_Servicios/Conexiones_Servicios"
 WORK_DIR="$CONEXIONES_ROOT/FTP"
 LOG_DIR="$WORK_DIR/logs"
 FTP_SHARE="$WORK_DIR/FTP_Share"

@@ -8,7 +8,7 @@
 G="\033[0;32m"; C="\033[0;36m"; Y="\033[1;33m"; R="\033[0;31m"
 B="\033[1;37m"; DIM="\033[2m"; RST="\033[0m"
 
-CONEXIONES_ROOT="/home/moskov/Desktop/Moskov/Ciberseguridad/04_Servicios/Conexiones Servicios"
+CONEXIONES_ROOT="/home/moskov/Desktop/Moskov/Ciberseguridad/4_Servicios/Conexiones_Servicios"
 WORK_DIR="$CONEXIONES_ROOT/SSH"
 PROFILES_FILE="$WORK_DIR/ssh_profiles.conf"
 mkdir -p "$WORK_DIR" && touch "$PROFILES_FILE"

@@ -52,7 +52,9 @@ activar_ftp() {
     # Generar credenciales temporales
     local ftp_user="uftp$(shuf -i 100-999 -n 1)"
     local ftp_pass="Pass$(shuf -i 1000-9999 -n 1)+"
-    local ftp_dir="/tmp/ftp_${ftp_user}"
+    local conexiones_root="/home/moskov/Desktop/Moskov/Ciberseguridad/4_Servicios/Conexiones_Servicios/FTP"
+    mkdir -p "$conexiones_root"
+    local ftp_dir="$conexiones_root/tmp_${ftp_user}"
 
     # Crear usuario y directorio
     useradd -m -d "$ftp_dir" -s /usr/sbin/nologin "$ftp_user" 2>/dev/null
