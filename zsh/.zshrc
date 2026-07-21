@@ -166,6 +166,7 @@ alias cdm='cd $HOME/Desktop/Moskov/Ciberseguridad'
 # Servicios de red (aplicativos interactivos)
 alias startftp='bash /home/moskov/Desktop/Moskov/Ciberseguridad/01_Scripts/servicios/startftp.sh'
 alias startssh='bash /home/moskov/Desktop/Moskov/Ciberseguridad/01_Scripts/servicios/startssh.sh'
+alias compartidos='sudo bash /home/moskov/Desktop/Moskov/Ciberseguridad/01_Scripts/servicios/gestionar_compartidos.sh'
 
 # Info Batería + Fecha/Hora (verde en terminal)
 
@@ -187,6 +188,30 @@ infbat() {
     fi
     datetime=$(date "+%A %d/%m/%Y  %H:%M:%S")
     echo -e "\033[0;32m  $datetime  |  $bat_info\033[0m"
+}
+
+# NetAudit - Herramienta de auditoría de red
+# Modo interactivo (menú)
+netaudit() {
+    sudo /home/moskov/Desktop/Moskov/Ciberseguridad/01_Scripts/go/netaudit/netaudit "$@"
+}
+
+# NetAudit - Modo comando directo
+netscan() {
+    local cmd="$1"
+    shift 2>/dev/null
+    case "$cmd" in
+        discover|scan|banner|sockets|firewall|audit)
+            sudo /home/moskov/Desktop/Moskov/Ciberseguridad/01_Scripts/go/netaudit/netaudit "$cmd" "$@"
+            ;;
+        help|-h|--help|"")
+            /home/moskov/Desktop/Moskov/Ciberseguridad/01_Scripts/go/netaudit/netaudit help
+            ;;
+        *)
+            echo "[!] Comando desconocido: $cmd"
+            echo "    Usa: netscan help"
+            ;;
+    esac
 }
 
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"

@@ -16,10 +16,11 @@ B="\033[1;37m"    # Blanco bold
 DIM="\033[2m"     # Dim
 RST="\033[0m"     # Reset
 
-# Directorio de trabajo
-WORK_DIR="/home/moskov/Desktop/Moskov/Ciberseguridad/04_Servicios/FTP"
+# Directorio de trabajo (Estándar: Conexiones Servicios)
+CONEXIONES_ROOT="/home/moskov/Desktop/Moskov/Ciberseguridad/04_Servicios/Conexiones Servicios"
+WORK_DIR="$CONEXIONES_ROOT/FTP"
 LOG_DIR="$WORK_DIR/logs"
-FTP_SHARE="/home/moskov/Desktop/FTP_Share"
+FTP_SHARE="$WORK_DIR/FTP_Share"
 mkdir -p "$LOG_DIR" "$FTP_SHARE"
 
 # Auto-instalar pyftpdlib si no existe

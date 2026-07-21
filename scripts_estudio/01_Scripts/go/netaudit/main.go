@@ -31,6 +31,13 @@ var sessionData struct {
 }
 
 func main() {
+	// Quick check: if "help" command, show usage without any initialization
+	if len(os.Args) > 1 && (os.Args[1] == "help" || os.Args[1] == "--help" || os.Args[1] == "-h") {
+		cli.PrintBanner()
+		cli.PrintUsage()
+		return
+	}
+
 	// Determine base directory (where the binary is executed)
 	baseDir, err := os.Getwd()
 	if err != nil {
@@ -54,6 +61,22 @@ func main() {
 	}
 	logger.Info("Directorio de resultados: %s", resultsDir)
 
+	// Check if running in command mode (arguments provided)
+	cmd := cli.ParseArgs(os.Args)
+	if cmd != nil {
+		// Help doesn't need logger/results initialization
+		if cmd.Name == cli.CmdHelp {
+			cli.PrintBanner()
+			cli.PrintUsage()
+			return
+		}
+		cli.PrintBanner()
+		logger.Info("Modo comando: %s", cmd.Name)
+		runCommand(cmd)
+		return
+	}
+
+	// Interactive mode (no arguments)
 	cli.PrintBanner()
 
 	menu := cli.NewMenu()
@@ -86,6 +109,459 @@ func main() {
 			logger.Warn("Opción inválida ingresada: %s", choice)
 		}
 	}
+}
+
+// runCommand executes a subcommand directly from CLI arguments.
+func runCommand(cmd *cli.Command) {
+	switch cmd.Name {
+	case cli.CmdHelp:
+		cli.PrintUsage()
+
+	case cli.CmdDiscover:
+		cmdDiscover(cmd)
+
+	case cli.CmdScan:
+		cmdScan(cmd)
+
+	case cli.CmdBanner:
+		cmdBanner(cmd)
+
+	case cli.CmdSockets:
+		cmdSockets()
+
+	case cli.CmdFirewall:
+		cmdFirewall(cmd)
+
+	case cli.CmdAudit:
+		cmdAudit(cmd)
+	}
+}
+
+// cmdDiscover executes host discovery from CLI flags.
+func cmdDiscover(cmd *cli.Command) {
+	cli.PrintSection("Descubrimiento de Hosts (Barrido ARP/ICMP)")
+	logger.Action("Comando: discover")
+
+	defaultIface, err := scanner.GetDefaultInterface()
+	if err != nil {
+		defaultIface = "eth0"
+	}
+
+	iface := cmd.GetFlag("iface", defaultIface)
+	timeoutMs, _ := strconv.Atoi(cmd.GetFlag("timeout", "1000"))
+	if timeoutMs <= 0 {
+		timeoutMs = 1000
+	}
+
+	timeout := time.Duration(timeoutMs) * time.Millisecond
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	cli.PrintInfo("Escaneando subred en interfaz %s (timeout: %dms)...", iface, timeoutMs)
+	logger.Info("Barrido ARP en interfaz %s con timeout %dms", iface, timeoutMs)
+	fmt.Println()
+
+	hosts, err := scanner.ARPScan(ctx, iface, timeout)
+	if err != nil {
+		cli.PrintError("Escaneo fallido: %v", err)
+		logger.Error("Barrido ARP fallido: %v", err)
+		os.Exit(1)
+	}
+
+	if len(hosts) == 0 {
+		cli.PrintWarning("No se descubrieron hosts")
+		return
+	}
+
+	table := cli.NewTable("Dirección IP", "Dirección MAC", "Fabricante", "Método")
+	for _, h := range hosts {
+		mac := h.MAC
+		if mac == "" {
+			mac = "N/A"
+		}
+		vendor := h.Vendor
+		if vendor == "" {
+			vendor = "Desconocido"
+		}
+		table.AddRow(h.IP, mac, vendor, h.Method)
+	}
+	table.Print()
+
+	cli.PrintSuccess("Se descubrieron %d host(s)", len(hosts))
+
+	path, err := report.ExportHostDiscovery(resultsDir, iface, hosts)
+	if err != nil {
+		logger.Error("Error al exportar reporte: %v", err)
+	} else {
+		cli.PrintSuccess("Reporte guardado: %s", path)
+	}
+}
+
+// cmdScan executes port scanning from CLI flags.
+func cmdScan(cmd *cli.Command) {
+	cli.PrintSection("Escáner de Puertos Asíncrono")
+	logger.Action("Comando: scan")
+
+	target := cmd.GetFlag("target", "")
+	if target == "" {
+		cli.PrintError("Se requiere --target <ip/hostname>")
+		cli.PrintInfo("Ejemplo: netaudit scan --target 192.168.1.1 --ports 1-1024")
+		os.Exit(1)
+	}
+
+	portRange := cmd.GetFlag("ports", "")
+	concurrency, _ := strconv.Atoi(cmd.GetFlag("concurrency", "500"))
+	timeoutMs, _ := strconv.Atoi(cmd.GetFlag("timeout", "2000"))
+
+	if concurrency <= 0 {
+		concurrency = 500
+	}
+	if timeoutMs <= 0 {
+		timeoutMs = 2000
+	}
+
+	cfg := scanner.ScanConfig{
+		Target:      target,
+		PortRange:   portRange,
+		Timeout:     time.Duration(timeoutMs) * time.Millisecond,
+		Concurrency: concurrency,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	cli.PrintInfo("Escaneando %s (concurrencia: %d, timeout: %dms)...", target, concurrency, timeoutMs)
+	logger.Info("Escaneo: target=%s, rango=%s, concurrencia=%d", target, portRange, concurrency)
+	fmt.Println()
+
+	start := time.Now()
+	results, err := scanner.ScanPorts(ctx, cfg)
+	elapsed := time.Since(start)
+
+	if err != nil {
+		cli.PrintError("Escaneo fallido: %v", err)
+		logger.Error("Escaneo fallido en %s: %v", target, err)
+		os.Exit(1)
+	}
+
+	if len(results) == 0 {
+		cli.PrintWarning("No se encontraron puertos abiertos en %s", target)
+		return
+	}
+
+	table := cli.NewTable("Puerto", "Estado", "Servicio")
+	for _, r := range results {
+		svc := r.Service
+		if svc == "" {
+			svc = "desconocido"
+		}
+		table.AddRow(fmt.Sprintf("%d", r.Port), r.State, svc)
+	}
+	table.Print()
+
+	cli.PrintSuccess("Se encontraron %d puerto(s) abierto(s) en %s", len(results), elapsed.Round(time.Millisecond))
+
+	path, err := report.ExportPortScan(resultsDir, target, results)
+	if err != nil {
+		logger.Error("Error al exportar reporte: %v", err)
+	} else {
+		cli.PrintSuccess("Reporte guardado: %s", path)
+	}
+}
+
+// cmdBanner executes banner grabbing from CLI flags.
+func cmdBanner(cmd *cli.Command) {
+	cli.PrintSection("Inspección de Servicios / Banner")
+	logger.Action("Comando: banner")
+
+	target := cmd.GetFlag("target", "")
+	if target == "" {
+		cli.PrintError("Se requiere --target <ip/hostname>")
+		cli.PrintInfo("Ejemplo: netaudit banner --target 192.168.1.1")
+		os.Exit(1)
+	}
+
+	timeoutMs, _ := strconv.Atoi(cmd.GetFlag("timeout", "5000"))
+	if timeoutMs <= 0 {
+		timeoutMs = 5000
+	}
+	timeout := time.Duration(timeoutMs) * time.Millisecond
+
+	var results []*banner.Result
+
+	// If specific port given, only probe that
+	if cmd.HasFlag("port") {
+		port, _ := strconv.Atoi(cmd.GetFlag("port", "0"))
+		if port <= 0 || port > 65535 {
+			cli.PrintError("Puerto inválido: %s", cmd.GetFlag("port", ""))
+			os.Exit(1)
+		}
+		cli.PrintInfo("Sondeando puerto %d en %s...", port, target)
+		result, err := banner.Grab(target, port, timeout)
+		if err != nil {
+			cli.PrintError("Sondeo fallido: %v", err)
+			os.Exit(1)
+		}
+		results = append(results, result)
+		displayBannerResult(result)
+	} else {
+		// Default: probe SSH (22) and FTP (21)
+		cli.PrintInfo("Sondeando SSH (puerto 22)...")
+		sshResult, err := banner.ProbeSSH(target, timeout)
+		if err != nil {
+			cli.PrintWarning("SSH: %v", err)
+		} else {
+			results = append(results, sshResult)
+			displayBannerResult(sshResult)
+		}
+
+		cli.PrintInfo("Sondeando FTP (puerto 21)...")
+		ftpResult, err := banner.ProbeFTP(target, timeout)
+		if err != nil {
+			cli.PrintWarning("FTP: %v", err)
+		} else {
+			results = append(results, ftpResult)
+			displayBannerResult(ftpResult)
+		}
+	}
+
+	if len(results) > 0 {
+		path, err := report.ExportBannerGrab(resultsDir, target, results)
+		if err != nil {
+			logger.Error("Error al exportar reporte: %v", err)
+		} else {
+			cli.PrintSuccess("Reporte guardado: %s", path)
+		}
+	}
+}
+
+// cmdSockets executes local sockets listing from CLI.
+func cmdSockets() {
+	cli.PrintSection("Sockets Locales en Escucha")
+	logger.Action("Comando: sockets")
+
+	sockets, err := firewall.GetListeningSockets()
+	if err != nil {
+		cli.PrintError("Error al obtener sockets: %v", err)
+		cli.PrintInfo("Puede requerir privilegios elevados (sudo)")
+		os.Exit(1)
+	}
+
+	if len(sockets) == 0 {
+		cli.PrintWarning("No se encontraron sockets en escucha")
+		return
+	}
+
+	table := cli.NewTable("Protocolo", "Dirección", "Puerto", "PID", "Proceso")
+	for _, s := range sockets {
+		pidStr := fmt.Sprintf("%d", s.PID)
+		if s.PID == 0 {
+			pidStr = "-"
+		}
+		proc := s.Process
+		if proc == "" {
+			proc = "-"
+		}
+		table.AddRow(s.Protocol, s.Address, fmt.Sprintf("%d", s.Port), pidStr, proc)
+	}
+	table.Print()
+
+	cli.PrintSuccess("Se encontraron %d socket(s) en escucha", len(sockets))
+
+	path, err := report.ExportLocalSockets(resultsDir, sockets)
+	if err != nil {
+		logger.Error("Error al exportar reporte: %v", err)
+	} else {
+		cli.PrintSuccess("Reporte guardado: %s", path)
+	}
+}
+
+// cmdFirewall executes firewall operations from CLI flags.
+func cmdFirewall(cmd *cli.Command) {
+	cli.PrintSection("Gestión de Reglas de Firewall")
+	logger.Action("Comando: firewall")
+
+	if err := scanner.CheckPrivileges(); err != nil {
+		cli.PrintError("%v", err)
+		os.Exit(1)
+	}
+
+	proto := cmd.GetFlag("proto", "tcp")
+	var results []firewall.RuleResult
+
+	if cmd.HasFlag("block") {
+		port, _ := strconv.Atoi(cmd.GetFlag("block", "0"))
+		if port <= 0 || port > 65535 {
+			cli.PrintError("Puerto inválido para --block")
+			os.Exit(1)
+		}
+		rule := firewall.Rule{Port: port, Protocol: proto, Action: "block", Dir: "in"}
+		logger.Command("Firewall CLI: bloquear puerto %d/%s", port, proto)
+		result, err := firewall.ApplyRule(rule)
+		if err != nil {
+			cli.PrintError("Fallo: %v", err)
+			os.Exit(1)
+		}
+		if result.Success {
+			cli.PrintSuccess("Puerto %d/%s bloqueado: %s", port, proto, result.Message)
+			cli.PrintInfo("Comando ejecutado: %s", result.Command)
+		} else {
+			cli.PrintError("Fallo: %s", result.Message)
+		}
+		results = append(results, *result)
+
+	} else if cmd.HasFlag("allow") {
+		port, _ := strconv.Atoi(cmd.GetFlag("allow", "0"))
+		if port <= 0 || port > 65535 {
+			cli.PrintError("Puerto inválido para --allow")
+			os.Exit(1)
+		}
+		rule := firewall.Rule{Port: port, Protocol: proto, Action: "allow", Dir: "in"}
+		logger.Command("Firewall CLI: permitir puerto %d/%s", port, proto)
+		result, err := firewall.ApplyRule(rule)
+		if err != nil {
+			cli.PrintError("Fallo: %v", err)
+			os.Exit(1)
+		}
+		if result.Success {
+			cli.PrintSuccess("Puerto %d/%s permitido: %s", port, proto, result.Message)
+			cli.PrintInfo("Comando ejecutado: %s", result.Command)
+		} else {
+			cli.PrintError("Fallo: %s", result.Message)
+		}
+		results = append(results, *result)
+
+	} else if cmd.HasFlag("remove") {
+		port, _ := strconv.Atoi(cmd.GetFlag("remove", "0"))
+		if port <= 0 || port > 65535 {
+			cli.PrintError("Puerto inválido para --remove")
+			os.Exit(1)
+		}
+		rule := firewall.Rule{Port: port, Protocol: proto, Action: "block", Dir: "in"}
+		logger.Command("Firewall CLI: eliminar regla puerto %d/%s", port, proto)
+		result, err := firewall.RemoveRule(rule)
+		if err != nil {
+			cli.PrintError("Fallo: %v", err)
+			os.Exit(1)
+		}
+		if result.Success {
+			cli.PrintSuccess("Regla eliminada para puerto %d/%s: %s", port, proto, result.Message)
+		} else {
+			cli.PrintError("Fallo: %s", result.Message)
+		}
+		results = append(results, *result)
+
+	} else {
+		cli.PrintError("Se requiere --block, --allow, o --remove <puerto>")
+		cli.PrintInfo("Ejemplo: netaudit firewall --block 4444 --proto tcp")
+		os.Exit(1)
+	}
+
+	if len(results) > 0 {
+		path, err := report.ExportFirewallOps(resultsDir, results)
+		if err != nil {
+			logger.Error("Error al exportar reporte: %v", err)
+		} else {
+			cli.PrintSuccess("Reporte guardado: %s", path)
+		}
+	}
+}
+
+// cmdAudit executes a full audit from CLI flags.
+func cmdAudit(cmd *cli.Command) {
+	cli.PrintSection("Auditoría Completa de Red")
+	logger.Action("Comando: audit")
+
+	target := cmd.GetFlag("target", "")
+	if target == "" {
+		cli.PrintError("Se requiere --target <ip/hostname>")
+		cli.PrintInfo("Ejemplo: netaudit audit --target 192.168.1.1")
+		os.Exit(1)
+	}
+
+	cli.PrintInfo("Iniciando auditoría completa de %s...", target)
+	logger.Info("Auditoría completa CLI para target: %s", target)
+	fmt.Println()
+
+	auditData := report.FullAuditData{Target: target}
+
+	// Phase 1
+	cli.PrintInfo("Fase 1: Descubrimiento de Hosts...")
+	defaultIface, _ := scanner.GetDefaultInterface()
+	if defaultIface != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		hosts, err := scanner.ARPScan(ctx, defaultIface, 800*time.Millisecond)
+		cancel()
+		if err == nil && len(hosts) > 0 {
+			cli.PrintSuccess("Se descubrieron %d host(s)", len(hosts))
+			auditData.Hosts = hosts
+			auditData.Interface = defaultIface
+		} else {
+			cli.PrintWarning("Descubrimiento: %v", err)
+		}
+	}
+
+	// Phase 2
+	cli.PrintInfo("Fase 2: Escaneo de Puertos en %s...", target)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ports, err := scanner.ScanPorts(ctx, scanner.ScanConfig{
+		Target:      target,
+		Timeout:     2 * time.Second,
+		Concurrency: 500,
+	})
+	cancel()
+	if err == nil && len(ports) > 0 {
+		cli.PrintSuccess("Se encontraron %d puerto(s) abierto(s)", len(ports))
+		auditData.Ports = ports
+
+		table := cli.NewTable("Puerto", "Servicio")
+		for _, p := range ports {
+			svc := p.Service
+			if svc == "" {
+				svc = "desconocido"
+			}
+			table.AddRow(fmt.Sprintf("%d", p.Port), svc)
+		}
+		table.Print()
+	} else {
+		cli.PrintWarning("No se encontraron puertos abiertos")
+	}
+
+	// Phase 3
+	cli.PrintInfo("Fase 3: Análisis de Banners...")
+	var banners []*banner.Result
+	for _, p := range ports {
+		if p.Port == 22 || p.Port == 21 {
+			result, err := banner.Grab(target, p.Port, 5*time.Second)
+			if err == nil {
+				banners = append(banners, result)
+				status := "SEGURO"
+				if !result.Secure {
+					status = "INSEGURO"
+				}
+				cli.PrintInfo("  Puerto %d (%s): %s - %s", p.Port, result.Service, result.Banner, status)
+			}
+		}
+	}
+	auditData.Banners = banners
+
+	// Phase 4
+	cli.PrintInfo("Fase 4: Sockets Locales...")
+	sockets, err := firewall.GetListeningSockets()
+	if err == nil && len(sockets) > 0 {
+		cli.PrintSuccess("Se encontraron %d socket(s) en escucha", len(sockets))
+		auditData.Sockets = sockets
+	}
+
+	fmt.Println()
+	cli.PrintSuccess("¡Auditoría completa finalizada!")
+
+	path, err := report.ExportFullAudit(resultsDir, auditData)
+	if err != nil {
+		cli.PrintError("Error al exportar reporte: %v", err)
+		os.Exit(1)
+	}
+	cli.PrintSuccess("Reporte de auditoría guardado: %s", path)
 }
 
 // runHostDiscovery performs ARP/ICMP host discovery on the local subnet.

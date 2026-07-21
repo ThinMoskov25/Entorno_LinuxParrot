@@ -122,6 +122,9 @@ cd ~/dotfiles && ./install.sh
 | `infbat` | `infbat` | Muestra fecha/hora + bateria (verde) |
 | `startftp` | `startftp` | Aplicativo interactivo para servidor FTP |
 | `startssh` | `startssh` | Aplicativo interactivo para conexiones SSH |
+| `compartidos` | `compartidos` | Gestor de carpetas compartidas (Samba) |
+| `netaudit` | `netaudit` | Herramienta de auditoria de red (menu interactivo) |
+| `netscan` | `netscan discover/scan/banner/audit` | NetAudit en modo comando directo |
 
 ---
 
@@ -186,3 +189,26 @@ cd ~/dotfiles && ./install.sh
 - Tema Rofi: squared-nord
 - Todos los paths son absolutos a `/home/moskov` (no usan $HOME para evitar conflictos con root)
 - El powermenu requiere altura 260px para mostrar las 5 opciones
+
+---
+
+## NetAudit (Go)
+
+Herramienta de auditoria de red escrita en Go. Ubicada en `scripts_estudio/01_Scripts/go/netaudit/`.
+
+**Comandos disponibles:**
+| Comando | Descripcion |
+|---------|-------------|
+| `netaudit` | Menu interactivo completo |
+| `netscan discover` | Descubrir hosts en la red local |
+| `netscan scan` | Escanear puertos de un host |
+| `netscan banner` | Capturar banners de servicios |
+| `netscan sockets` | Listar sockets abiertos |
+| `netscan firewall` | Revisar reglas de firewall |
+| `netscan audit` | Auditoria completa |
+
+**Compilar:**
+```bash
+cd ~/Desktop/Moskov/Ciberseguridad/01_Scripts/go/netaudit
+go build -o netaudit .
+```

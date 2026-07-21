@@ -24,7 +24,7 @@ window {
     background-color:               @background;
     text-color:                     @foreground;
     border-radius:                  15px;
-    height:                         230px;
+    height:                         260px;
     width:                          180px;
     x-offset:                       -15;
     y-offset:                       45;
