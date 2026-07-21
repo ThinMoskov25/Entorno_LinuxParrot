@@ -1,158 +1,224 @@
-# Entorno Linux Parrot - v3.0
+# Entorno Linux Parrot
 
 Repositorio de configuracion, scripts y herramientas del entorno de trabajo en Parrot Security OS.
+
+---
 
 ## Estructura del Proyecto
 
 ```
 Copia_Entorno/
-├── bspwm/                    # Configuracion de bspwm (WM)
-├── sxhkd/                    # Atajos de teclado
-├── polybar/                  # Barra de estado
-├── picom/                    # Compositor
-├── kitty/                    # Terminal
+├── bspwm/                          # Window Manager
+├── sxhkd/                          # Atajos de teclado
+├── polybar/                        # Barra de estado
+├── picom/                          # Compositor
+├── kitty/                          # Emulador de terminal
 ├── scripts_estudio/
 │   └── 1_Scripts/
-│       ├── bash/             # Scripts de practica bash
-│       ├── generadores/      # Generadores de datos
-│       ├── go/               # Scripts en Go
-│       ├── python/           # Scripts en Python
-│       └── servicios/        # Aplicativos interactivos de red
-│           ├── gestionar_compartidos.sh   # Gestor de Unidades Compartidas
-│           ├── startfire.sh               # Gestor de Firewall (UFW)
-│           ├── startftp.sh                # Gestor de servicio FTP
-│           ├── startssh.sh                # Gestor de conexiones SSH
-│           └── open_ftp.sh                # FTP rapido temporal
-├── zshrc                     # Configuracion de ZSH
+│       ├── bash/                   # Scripts de practica
+│       ├── generadores/            # Generadores de datos y passwords
+│       ├── go/
+│       │   └── netaudit/           # Herramienta de auditoria de red (Go)
+│       ├── python/                 # Scripts de estudio Python
+│       └── servicios/              # Aplicativos interactivos de red
+│           ├── gestionar_compartidos.sh
+│           ├── startfire.sh
+│           ├── startftp.sh
+│           ├── startssh.sh
+│           └── open_ftp.sh
+├── zshrc                           # Configuracion de ZSH
+├── CHANGELOG.md                    # Registro de actualizaciones
 └── README.md
 ```
 
-## Scripts de Servicios de Red
+### Carpeta de Datos Operativos (en el sistema)
 
-### gestionar_compartidos.sh (alias: `compartidos`)
-
-Gestor completo de unidades compartidas en red (SMB/NFS/SSHFS).
-
-**Funcionalidades:**
-- Escaneo de red para descubrir recursos compartidos
-- Montaje de unidades SMB, NFS y SSHFS con validacion de puertos
-- Persistencia de montajes (fstab / systemd.mount)
-- Creacion de compartidos Samba y NFS con 3 modos de acceso:
-  - Publico (anonimo)
-  - Restringido (usuarios especificos)
-  - Predeterminado (cualquier usuario autenticado, lectura/escritura segura)
-- Edicion de compartidos existentes (permisos, usuarios, masks, ruta)
-- Gestion de usuarios temporales (crear, asignar, eliminar)
-- Eliminacion completa de compartidos (share + carpeta + usuarios + servicio)
-- Diagnostico de conectividad (puertos 445, 2049, 22, 139)
-- Gestion de cuotas y espacio
-- Monitoreo en tiempo real y log de auditoria
-- Respaldos (.tar.gz / .zip) y restauracion
-- Mantenimiento (forzar desmontaje, liberar bloqueos, rsync)
-
-**Ruta de datos:** `Ciberseguridad/4_Servicios/Conexiones_Servicios/Unidades_Compartidas/`
+```
+~/Desktop/Moskov/Ciberseguridad/4_Servicios/Conexiones_Servicios/
+├── FTP/                # Datos del gestor FTP
+├── SSH/                # Perfiles y datos SSH
+└── Unidades_Compartidas/
+    ├── logs/           # Log de auditoria
+    ├── credenciales/   # Credenciales SMB (chmod 600)
+    ├── backups/        # Respaldos .tar.gz / .zip
+    ├── montajes/       # Puntos de montaje activos
+    └── configuracion/  # Cuotas, usuarios temporales
+```
 
 ---
 
-### startfire.sh (alias: `startfire`)
+## Scripts de Servicios
+
+Todos los scripts se ejecutan desde cualquier ruta mediante aliases configurados en `.zshrc`.
+
+---
+
+### gestionar_compartidos.sh
+
+**Comando:** `compartidos`
+
+Gestor completo de unidades compartidas en red. Soporta SMB (Samba), NFS y SSHFS.
+
+#### Menu Principal
+
+| # | Funcion | Descripcion |
+|---|---------|-------------|
+| 1 | Escanear red | Descubre recursos SMB/NFS en la red local con nmap |
+| 2 | Conectar a unidad | Monta recursos SMB, NFS o SSHFS con validacion de puertos |
+| 3 | Persistencia | Agrega montajes a /etc/fstab o crea unidades systemd.mount |
+| 4 | Listar/Desmontar | Muestra compartidos creados y permite eliminarlos completo |
+| 5 | Crear compartido | Crea carpeta + permisos + comparte en red (Samba o NFS) |
+| 6 | Editar compartido | Modifica permisos, usuarios, masks o ruta de un share existente |
+| 7 | Usuarios temporales | Crear, listar, asignar y eliminar usuarios Samba temporales |
+| 8 | Diagnostico | Prueba puertos 445/2049/22/139, ping y lista recursos remotos |
+| 9 | Cuotas | Ver uso de espacio y definir limites con alertas |
+| 10 | Monitoreo | Conexiones activas (smbstatus/ss) y log de auditoria |
+| 11 | Respaldos | Crear .tar.gz/.zip y restaurar desde backups |
+| 12 | Mantenimiento | Forzar desmontaje, liberar bloqueos, rsync, estado servicios |
+
+#### Modos de Acceso al Crear Compartido
+
+| Modo | Descripcion |
+|------|-------------|
+| Publico | Acceso anonimo sin credenciales (guest ok) |
+| Restringido | Solo usuarios especificos con masks personalizados |
+| Predeterminado | Cualquier usuario autenticado, lectura/escritura segura con proteccion de grupo |
+
+#### Editar Compartido (Opcion 6)
+
+| Opcion | Accion |
+|--------|--------|
+| 1 | Cambiar permisos (solo lectura / lectura-escritura) |
+| 2 | Cambiar create mask / directory mask |
+| 3 | Cambiar modo (publico <-> restringido) |
+| 4 | Agregar usuario con acceso |
+| 5 | Quitar usuario de acceso |
+| 6 | Cambiar ruta del compartido (con opcion de mover contenido) |
+
+#### Eliminar Compartido (Opcion 4)
+
+| Accion | Que hace |
+|--------|----------|
+| es | Elimina share de smb.conf + borra carpeta + elimina usuarios temporales + reinicia smbd |
+| en | Elimina de /etc/exports + borra carpeta + reinicia nfs-kernel-server |
+| dm | Desmonta un montaje activo |
+| all | Elimina TODO (shares + exports + montajes + usuarios) con confirmacion |
+
+---
+
+### startfire.sh
+
+**Comando:** `startfire`
 
 Gestor interactivo de Firewall UFW.
 
-**Funcionalidades:**
-- Activar / Detener UFW
-- Ver estado y reglas activas (verbose)
-- Permitir puerto (TCP / UDP / ambos)
-- Bloquear puerto o servicio por nombre
-- Denegar IP especifica (todo o puerto concreto)
-- Eliminar regla por numero
-- Reset completo a valores por defecto
-- Escaneo rapido de puertos locales en escucha (ss)
+| # | Funcion | Descripcion |
+|---|---------|-------------|
+| 1 | Activar Firewall | `ufw --force enable` |
+| 2 | Detener Firewall | `ufw disable` |
+| 3 | Ver Estado | Muestra reglas activas con `ufw status verbose` |
+| 4 | Permitir Puerto | Permite TCP, UDP o ambos en un puerto especifico |
+| 5 | Bloquear Puerto | Bloquea por numero de puerto o nombre de servicio |
+| 6 | Denegar IP | Bloquea todo el trafico o un puerto especifico desde una IP |
+| 7 | Eliminar Regla | Lista reglas numeradas y elimina por numero |
+| 8 | Reset | Restablece UFW a configuracion por defecto (con confirmacion) |
+| 9 | Escaneo Local | Muestra puertos en escucha con ss (TCP/UDP) |
 
 ---
 
-### startssh.sh (alias: `startssh`)
+### startssh.sh
+
+**Comando:** `startssh`
 
 Gestor interactivo de conexiones SSH.
 
-**Funcionalidades:**
-- Activar / Detener servicio SSH
-- Conectar a host remoto
-- Perfiles guardados (agregar, listar, eliminar)
-- Generar llaves SSH
-- Copiar llave a host remoto
-- Estado del servicio
-
-**Ruta de datos:** `Ciberseguridad/4_Servicios/Conexiones_Servicios/SSH/`
+| # | Funcion | Descripcion |
+|---|---------|-------------|
+| 1 | Activar SSH | Inicia el servicio sshd |
+| 2 | Detener SSH | Detiene el servicio |
+| 3 | Conectar a host | Conexion SSH interactiva |
+| 4 | Perfiles guardados | Lista perfiles almacenados |
+| 5 | Agregar perfil | Guarda host/usuario/puerto |
+| 6 | Eliminar perfil | Borra un perfil guardado |
+| 7 | Generar llaves | Crea par de llaves SSH (ed25519) |
+| 8 | Copiar llave | Envia llave publica a host remoto |
+| 9 | Estado | Muestra estado del servicio SSH |
 
 ---
 
-### startftp.sh (alias: `startftp`)
+### startftp.sh
+
+**Comando:** `startftp`
 
 Gestor interactivo de servicio FTP (vsftpd).
 
-**Funcionalidades:**
-- Activar / Detener servicio FTP
-- Configuracion de vsftpd
-- Gestion de usuarios FTP
-- Monitoreo de conexiones
+| # | Funcion | Descripcion |
+|---|---------|-------------|
+| 1 | Activar FTP | Inicia vsftpd |
+| 2 | Detener FTP | Detiene vsftpd |
+| 3 | Estado | Muestra estado del servicio |
+| 4 | Configurar | Edita configuracion de vsftpd |
+| 5 | Usuarios | Gestiona usuarios FTP |
+| 6 | Logs | Muestra logs de conexion |
 
-**Ruta de datos:** `Ciberseguridad/4_Servicios/Conexiones_Servicios/FTP/`
+---
+
+### open_ftp.sh
+
+FTP rapido temporal. Crea un usuario efimero y abre un servidor FTP listo para transferir archivos.
+
+---
+
+## Aliases y Funciones (.zshrc)
+
+```bash
+# Servicios de red
+alias startftp='bash .../servicios/startftp.sh'
+alias startssh='bash .../servicios/startssh.sh'
+alias startfire='bash .../servicios/startfire.sh'
+alias compartidos='bash .../servicios/gestionar_compartidos.sh'
+
+# Utilidades
+function refresh() { source ~/.zshrc; }
+function settarget() { ... }     # Guardar IP/nombre de maquina objetivo
+function cleartarget() { ... }   # Limpiar objetivo
+function extractPorts() { ... }  # Extraer puertos de escaneo nmap
+function whichsystem() { ... }   # Detectar SO por TTL
+function wificonect() { ... }    # Conectar WiFi
+function wifiscan() { ... }      # Monitor mode WiFi
+function resnet() { ... }        # Reiniciar servicios de red
+function mkt() { ... }           # Crear carpetas de trabajo CTF
+function infbat() { ... }        # Info bateria + fecha/hora
+```
+
+---
+
+## Requisitos
+
+| Paquete | Uso |
+|---------|-----|
+| nmap | Escaneo de red |
+| samba | Compartidos SMB |
+| nfs-common | Cliente NFS |
+| nfs-kernel-server | Servidor NFS |
+| sshfs | Montaje SSH |
+| cifs-utils | Montaje SMB |
+| ufw | Firewall |
+| rsync | Sincronizacion |
+| zip/unzip | Respaldos |
 
 ---
 
 ## Estandar de Organizacion
 
-### Carpeta Conexiones_Servicios
+- Carpetas sin ceros a la izquierda: `1_Scripts`, `4_Servicios`
+- Rutas sin espacios: guion bajo `Conexiones_Servicios`
+- Scripts en `1_Scripts/servicios/`, datos operativos en `4_Servicios/Conexiones_Servicios/`
+- Todos los scripts se auto-elevan a root cuando es necesario
+- Interfaz CLI clasica: banner + menu numerado + prompt + clear entre vistas
 
-Todos los scripts de servicios de red almacenan sus datos operativos en:
-```
-~/Desktop/Moskov/Ciberseguridad/4_Servicios/Conexiones_Servicios/
-├── FTP/
-├── SSH/
-└── Unidades_Compartidas/
-    ├── logs/
-    ├── credenciales/
-    ├── backups/
-    ├── montajes/
-    └── configuracion/
-```
+---
 
-### Nomenclatura de carpetas
-- Sin ceros a la izquierda: `1_Scripts`, `4_Servicios` (no `01_Scripts`)
-- Sin espacios: usar guion bajo `Conexiones_Servicios`
+## Actualizaciones
 
-## Aliases (.zshrc)
-
-```bash
-alias startftp='bash .../1_Scripts/servicios/startftp.sh'
-alias startssh='bash .../1_Scripts/servicios/startssh.sh'
-alias startfire='bash .../1_Scripts/servicios/startfire.sh'
-alias compartidos='bash .../1_Scripts/servicios/gestionar_compartidos.sh'
-```
-
-Funcion `refresh` para recargar la configuracion de zsh sin abrir nueva terminal.
-
-## Requisitos
-
-- Parrot Security OS / Debian-based
-- Paquetes: `nmap`, `samba`, `nfs-common`, `nfs-kernel-server`, `sshfs`, `cifs-utils`, `ufw`
-- Ejecucion como root (los scripts se auto-elevan con sudo)
-
-## Changelog
-
-### v3.0 (2026-07-21)
-- Nuevo: `gestionar_compartidos.sh` - Gestor completo de unidades compartidas
-- Nuevo: `startfire.sh` - Gestor de Firewall UFW
-- Nuevo: Modo predeterminado seguro para compartidos Samba
-- Nuevo: Edicion de compartidos existentes (permisos, usuarios, masks)
-- Nuevo: Eliminacion completa (share + carpeta + usuario + servicio)
-- Corregido: Estructura de carpetas sin ceros (01_ -> 1_)
-- Corregido: Rutas sin espacios (Conexiones_Servicios)
-- Actualizado: startftp.sh, startssh.sh, open_ftp.sh usan nueva ruta estandar
-- Actualizado: .zshrc con aliases startfire, compartidos y funcion refresh
-
-### v2.1
-- Sync: netaudit, gestionar_compartidos inicial, powermenu
-
-### v2.0
-- Reorganizacion completa, nueva estructura, README documentado
+Ver [CHANGELOG.md](CHANGELOG.md) para el historial detallado de cambios por version.
