@@ -43,8 +43,13 @@ if [ -x "$HOME/.config/polybar/launch.sh" ]; then
 fi
 
 # Picom (puede fallar en VM sin GPU - no es critico)
+# Solo lanzar si hay aceleracion grafica disponible
 if command -v picom >/dev/null 2>&1; then
-    picom 2>/dev/null &
+    if glxinfo 2>/dev/null | grep -qi "direct rendering: yes"; then
+        picom --backend xrender 2>/dev/null &
+    else
+        picom --backend xrender --no-vsync --no-fading-openclose 2>/dev/null &
+    fi
 fi
 
 # wmname (compatibilidad Java)

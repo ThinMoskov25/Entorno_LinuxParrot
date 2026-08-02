@@ -1,16 +1,33 @@
 #!/bin/sh
 
-# Interfaz a verificar
-INTERFACE="enx00e04c360540"
+# Detectar interfaz de red activa dinamicamente
+# Prioridad: ethernet con IP > cualquier interfaz con IP
+INTERFACE=""
 
-# Obtener la dirección IP de la interfaz especificada
-IP=$( /usr/sbin/ifconfig $INTERFACE | grep "inet " | awk '{print $2}' )
+# Buscar primera interfaz ethernet con IP
+for iface in $(ls /sys/class/net/ | grep -v lo); do
+    if [ -d "/sys/class/net/$iface/device" ]; then
+        IP=$(ip -4 addr show "$iface" 2>/dev/null | grep "inet " | awk '{print $2}' | cut -d/ -f1 | head -1)
+        if [ -n "$IP" ]; then
+            INTERFACE="$iface"
+            break
+        fi
+    fi
+done
 
-# Si la IP está vacía, significa que la interfaz no tiene una IP asignada
+# Si no hay ethernet, buscar cualquier interfaz con IP
+if [ -z "$INTERFACE" ]; then
+    for iface in $(ls /sys/class/net/ | grep -v lo); do
+        IP=$(ip -4 addr show "$iface" 2>/dev/null | grep "inet " | awk '{print $2}' | cut -d/ -f1 | head -1)
+        if [ -n "$IP" ]; then
+            INTERFACE="$iface"
+            break
+        fi
+    done
+fi
+
 if [ -z "$IP" ]; then
-    # Mostrar un icono de "Disconnected" en color rojo suave
-    echo "%{F#f28a8c} %{F#ffffff}Disconnected %{u-}"
+    echo "%{F#f28a8c} %{F#ffffff}Disconnected %{u-}"
 else
-    # Si hay IP, mostrarla en el formato adecuado
     echo "%{F#2495e7}󰈀 %{F#ffffff}$IP%{u-}"
 fi
