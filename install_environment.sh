@@ -168,6 +168,14 @@ phase_apt_install() {
         log_warn "apt-get update tuvo advertencias — continuando"
     }
 
+    # Upgrade del sistema (compatible con Parrot Security)
+    log_info "Actualizando sistema..."
+    if command -v parrot-upgrade &>/dev/null; then
+        parrot-upgrade -y 2>/dev/null || log_warn "parrot-upgrade tuvo advertencias"
+    else
+        apt-get upgrade "${APT_OPTS[@]}" 2>/dev/null || log_warn "apt upgrade tuvo advertencias"
+    fi
+
     # ─── Paquetes base del sistema ───────────────────────────────────────
     install_packages_safe "sistema-base" \
         build-essential git curl wget unzip tar \
