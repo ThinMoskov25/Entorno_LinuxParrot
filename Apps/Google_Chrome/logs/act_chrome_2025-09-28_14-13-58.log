@@ -1,0 +1,43 @@
+[2025-09-28 14:13:58] === INICIO DE INSTALACIÓN DE GOOGLE CHROME ===
+[2025-09-28 14:13:58] Clave GPG ya existe en /usr/share/keyrings/google-chrome.gpg
+[2025-09-28 14:13:58] Repositorio ya existe en /etc/apt/sources.list.d/google-chrome.list
+[2025-09-28 14:13:58] Actualizando índices del repositorio de Google Chrome...
+Des:1 http://dl.google.com/linux/chrome/deb stable InRelease [1.825 B]
+Des:2 http://dl.google.com/linux/chrome/deb stable/main amd64 Packages [1.212 B]
+Descargados 3.037 B en 0s (6.704 B/s)
+Leyendo lista de paquetes...
+[2025-09-28 14:13:58] Instalando Google Chrome...
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Leyendo lista de paquetes...
+Creando árbol de dependencias...
+Leyendo la información de estado...
+Se instalarán los siguientes paquetes NUEVOS:
+  google-chrome-stable
+0 actualizados, 1 nuevos se instalarán, 0 para eliminar y 0 no actualizados.
+Se necesita descargar 120 MB de archivos.
+Se utilizarán 395 MB de espacio de disco adicional después de esta operación.
+Des:1 http://dl.google.com/linux/chrome/deb stable/main amd64 google-chrome-stable amd64 140.0.7339.207-1 [120 MB]
+Descargados 120 MB en 12s (10,4 MB/s)
+Seleccionando el paquete google-chrome-stable previamente no seleccionado.
+(Leyendo la base de datos ... (Leyendo la base de datos ... 5%(Leyendo la base de datos ... 10%(Leyendo la base de datos ... 15%(Leyendo la base de datos ... 20%(Leyendo la base de datos ... 25%(Leyendo la base de datos ... 30%(Leyendo la base de datos ... 35%(Leyendo la base de datos ... 40%(Leyendo la base de datos ... 45%(Leyendo la base de datos ... 50%(Leyendo la base de datos ... 55%(Leyendo la base de datos ... 60%(Leyendo la base de datos ... 65%(Leyendo la base de datos ... 70%(Leyendo la base de datos ... 75%(Leyendo la base de datos ... 80%(Leyendo la base de datos ... 85%(Leyendo la base de datos ... 90%(Leyendo la base de datos ... 95%(Leyendo la base de datos ... 100%(Leyendo la base de datos ... 592750 ficheros o directorios instalados actualmente.)
+Preparando para desempaquetar .../google-chrome-stable_140.0.7339.207-1_amd64.deb ...
+Desempaquetando google-chrome-stable (140.0.7339.207-1) ...
+Configurando google-chrome-stable (140.0.7339.207-1) ...
+update-alternatives: utilizando /usr/bin/google-chrome-stable para proveer /usr/bin/x-www-browser (x-www-browser) en modo automático
+update-alternatives: utilizando /usr/bin/google-chrome-stable para proveer /usr/bin/gnome-www-browser (gnome-www-browser) en modo automático
+update-alternatives: utilizando /usr/bin/google-chrome-stable para proveer /usr/bin/google-chrome (google-chrome) en modo automático
+Procesando disparadores para mate-menus (1.26.0-3) ...
+Procesando disparadores para man-db (2.11.2-2) ...
+Procesando disparadores para menu (2.1.49) ...
+Procesando disparadores para mailcap (3.70+nmu1) ...
+Procesando disparadores para bamfdaemon (0.5.6+repack-1) ...
+Rebuilding /usr/share/applications/bamf-2.index...
+Procesando disparadores para desktop-file-utils (0.26-1) ...
+Scanning application launchers
+Removing duplicate launchers or broken launchers
+ [-] Missing executable file kcmshell5 at launcher /usr/share/applications/kcm_trash.desktop
+Launchers are updated
+[2025-09-28 14:14:24] Instalación completada. Versión instalada: Google Chrome 140.0.7339.207 
+[2025-09-28 14:14:24] === FIN DEL PROCESO ===

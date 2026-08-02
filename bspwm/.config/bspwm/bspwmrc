@@ -1,0 +1,50 @@
+#! /bin/sh
+# =============================================================================
+# bspwmrc - Moskov Environment v3.0
+# Blindado para VM: tolerante a ausencia de picom, feh, polybar
+# =============================================================================
+
+# Garantizar HOME
+export HOME="${HOME:-$(getent passwd $(whoami) | cut -d: -f6)}"
+
+# sxhkd (solo si no esta corriendo ya)
+pgrep -x sxhkd > /dev/null || sxhkd -c "$HOME/.config/sxhkd/sxhkdrc" &
+
+# Configuracion de monitor y espacios
+bspc monitor -d I II III IV V VI VII VIII IX X
+
+# Configuracion visual
+bspc config border_width         0
+bspc config window_gap          12
+bspc config split_ratio          0.52
+bspc config borderless_monocle   true
+bspc config gapless_monocle      true
+bspc config focus_follows_pointer true
+
+# Reglas de ventanas
+bspc rule -a Gimp desktop='^8' state=floating follow=on
+bspc rule -a Chromium desktop='^2'
+bspc rule -a mplayer2 state=floating
+bspc rule -a Kupfer.py focus=on
+bspc rule -a Screenkey manage=off
+
+# --- Lanzadores tolerantes a fallos (background, no bloquean) ---
+
+# Wallpaper
+WALLPAPER="$HOME/Desktop/Moskov/Fondo_Pantalla/fondo.jpeg"
+if [ -f "$WALLPAPER" ]; then
+    feh --bg-fill "$WALLPAPER" 2>/dev/null &
+fi
+
+# Polybar
+if [ -x "$HOME/.config/polybar/launch.sh" ]; then
+    "$HOME/.config/polybar/launch.sh" 2>/dev/null &
+fi
+
+# Picom (puede fallar en VM sin GPU - no es critico)
+if command -v picom >/dev/null 2>&1; then
+    picom 2>/dev/null &
+fi
+
+# wmname (compatibilidad Java)
+wmname LG3D 2>/dev/null &

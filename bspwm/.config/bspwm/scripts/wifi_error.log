@@ -1,0 +1,14 @@
+[2025-05-05 04:32:02] Error: la opción «--quiet» es desconocida, intente «nmcli -help».
+[2025-05-05 04:35:37] Error: la opción «--quiet» es desconocida, intente «nmcli -help».
+[2025-05-05 04:36:00] Error: la opción «--quiet» es desconocida, intente «nmcli -help».
+[2025-05-05 04:36:30] Error: la opción «--quiet» es desconocida, intente «nmcli -help».
+[2025-05-05 04:39:20] Error: la opción «--quiet» es desconocida, intente «nmcli -help».
+[2025-05-05 04:39:26] Command '['nmcli', 'device', 'disconnect', 'wlo1']' returned non-zero exit status 6.
+[2025-05-05 04:40:48] Error: la opción «--quiet» es desconocida, intente «nmcli -help».
+[2025-05-05 04:41:19] Error: la opción «--quiet» es desconocida, intente «nmcli -help».
+[2025-05-05 04:42:42] Error: la opción «--quiet» es desconocida, intente «nmcli -help».
+[2025-05-05 04:43:54] Error: la opción «--quiet» es desconocida, intente «nmcli -help».
+[2025-05-05 04:47:18] Error: Connection activation failed: Se necesitan secretos, pero no se han proporcionado.
+[2025-05-05 04:48:19] Error: Connection activation failed: Se necesitan secretos, pero no se han proporcionado.
+[2025-05-05 04:51:20] Error: Connection activation failed: Se necesitan secretos, pero no se han proporcionado.
+[2025-05-05 04:55:29] Conexión exitosa a la red: David Meza

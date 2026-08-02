@@ -1,653 +1,955 @@
-#!/usr/bin/env bash
-##############################################################################
-# install_environment.sh — Moskov Environment v3.0
-# Arquitectura Zero-Intervention: instalación 100% desatendida
-# Prevención activa de caídas de X11 y bloqueos de dpkg
-##############################################################################
+#!/bin/bash
+# =============================================================================
+# install_environment.sh - Moskov Environment v3.0
+# by Moskov - SrBalduR
+# Uso: sudo bash install_environment.sh [--auto]
+# Compatibilidad: Parrot Security 6.x / Debian 12+
+# =============================================================================
+# Arquitectura Zero-Intervention:
+#   --auto : Instalacion COMPLETA desatendida (sin menu, sin confirmaciones)
+#   Pre-Flight APT/DPKG auto-repair (candados, procesos zombie)
+#   X11-Aware Display Logic (no mata sesion grafica viva)
+#   Aislamiento modular: fallos APT NO bloquean despliegue de dotfiles
+#   Permisos imperativos finales SIEMPRE se ejecutan
+#   Clonacion TOTAL del entorno: paquetes, herramientas, apps, configs
+# =============================================================================
+
 set -uo pipefail
 
-# ─── CONSTANTES Y DETECCIÓN DE ENTORNO ───────────────────────────────────────
+# =============================================================================
+# MODULE 0: ELEVACION, ARGUMENTOS Y EXPORTS
+# =============================================================================
+
+# Detectar flag --auto ANTES de la elevacion
+AUTO_MODE=0
+for arg in "$@"; do
+    [[ "$arg" == "--auto" ]] && AUTO_MODE=1
+done
+
+if [[ "$(id -u)" -ne 0 ]]; then
+    exec sudo bash "$0" "$@"
+fi
+
+# Zero-Block APT
 export DEBIAN_FRONTEND=noninteractive
+export APT_LISTCHANGES_FRONTEND=none
 export NEEDRESTART_MODE=a
-export NEEDRESTART_SUSPEND=1
+export UCF_FORCE_CONFFOLD=YES
 
-SCRIPT_VERSION="3.0"
-SCRIPT_NAME="Moskov Environment"
+# =============================================================================
+# MODULE 1: DETECCION INQUEBRANTABLE DE USUARIO REAL
+# =============================================================================
 
-# Detectar usuario real (funciona con sudo, su, logname)
 detect_real_user() {
-    if [[ -n "${SUDO_USER:-}" ]]; then
-        echo "$SUDO_USER"
-    elif command -v logname &>/dev/null; then
-        logname 2>/dev/null || echo "$USER"
-    else
-        echo "$USER"
+    local candidate=""
+    candidate="${SUDO_USER:-}"
+    [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="$(logname 2>/dev/null || true)"
+    [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="$(who | awk 'NR==1{print $1}')"
+    [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="$(getent passwd 1000 | cut -d: -f1 2>/dev/null || true)"
+    if [[ -z "$candidate" || "$candidate" == "root" ]]; then
+        echo "ERROR CRITICO: No se detecto usuario real (no root)."
+        echo "Ejecuta: sudo -u TU_USUARIO bash $0"
+        exit 1
     fi
+    echo "$candidate"
 }
 
 REAL_USER="$(detect_real_user)"
-REAL_HOME="$(eval echo "~${REAL_USER}")"
+REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
 
-# ─── COLORES Y LOGGING ──────────────────────────────────────────────────────
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
-
-log_phase()  { echo -e "\n${BOLD}${CYAN}[$SCRIPT_NAME v$SCRIPT_VERSION]${NC} ${BOLD}$*${NC}"; }
-log_info()   { echo -e "  ${CYAN}[INFO]${NC}  $*"; }
-log_ok()     { echo -e "  ${GREEN}[OK]${NC}    $*"; }
-log_warn()   { echo -e "  ${YELLOW}[WARN]${NC}  $*"; }
-log_err()    { echo -e "  ${RED}[ERROR]${NC} $*"; }
-
-# ─── VERIFICACIÓN DE PRIVILEGIOS ─────────────────────────────────────────────
-if [[ $EUID -ne 0 ]]; then
-    log_err "Este script requiere privilegios de root. Ejecuta con: sudo $0"
+if [[ -z "$REAL_HOME" || ! -d "$REAL_HOME" ]]; then
+    echo "ERROR: HOME no encontrado para '$REAL_USER' ($REAL_HOME)"
     exit 1
 fi
 
-log_phase "Iniciando instalación desatendida"
-log_info "Usuario real detectado: ${REAL_USER}"
-log_info "Home del usuario: ${REAL_HOME}"
-log_info "Ejecutando como: $(whoami) (EUID=$EUID)"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MOSKOV_DIR="$REAL_HOME/Desktop/Moskov"
+CIBER_DIR="$MOSKOV_DIR/Ciberseguridad"
+LOG_DIR="$REAL_HOME/install_logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/install_$(date +%Y%m%d_%H%M%S).log"
+ERRORS=0
 
-##############################################################################
-# FASE 0: PRE-FLIGHT — Auto-Reparación de APT/DPKG
-##############################################################################
-phase_preflight() {
-    log_phase "FASE 0: PRE-FLIGHT — Saneamiento de APT/DPKG"
+APT_FLAGS=(-o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold")
 
-    # Matar procesos huérfanos de gestores de paquetes
-    log_info "Terminando procesos huérfanos de apt/dpkg..."
+# =============================================================================
+# MODULE 2: DETECCION DE SESION GRAFICA VIVA
+# =============================================================================
+
+is_gui_session_active() {
+    [[ -n "${DISPLAY:-}" ]] && return 0
+    pgrep -x lightdm &>/dev/null && return 0
+    pgrep -x Xorg &>/dev/null && return 0
+    pgrep -x X &>/dev/null && return 0
+    if [[ -f "/proc/$(pgrep -u "$REAL_USER" -x bspwm 2>/dev/null | head -1)/environ" ]] 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+GUI_ACTIVE=0
+is_gui_session_active && GUI_ACTIVE=1
+
+# =============================================================================
+# MODULE 3: INTERFAZ DE USUARIO (UI)
+# =============================================================================
+
+G="\033[0;32m"; C="\033[0;36m"; Y="\033[1;33m"; R="\033[0;31m"
+B="\033[1;37m"; DIM="\033[2m"; RST="\033[0m"
+
+banner() {
+    clear
+    echo -e "${C}"
+    echo "  ========================================================"
+    echo "       INSTALADOR DE ENTORNO - Moskov Environment v3.0"
+    echo "                  by Moskov - SrBalduR"
+    echo "  ========================================================"
+    echo "   Instalar . Reinstalar . Actualizar"
+    echo "  ========================================================"
+    echo -e "${RST}"
+}
+
+log_ok()   { echo -e "    ${G}[+]${RST} $1" | tee -a "$LOG_FILE"; }
+log_proc() { echo -e "    ${Y}[*]${RST} $1" | tee -a "$LOG_FILE"; }
+log_err()  { echo -e "    ${R}[!]${RST} $1" | tee -a "$LOG_FILE"; ((ERRORS++)); }
+log_info() { echo -e "    ${DIM}$1${RST}" | tee -a "$LOG_FILE"; }
+log_warn() { echo -e "    ${Y}[~]${RST} $1" | tee -a "$LOG_FILE"; }
+
+check_status() { [[ $? -eq 0 ]] && log_ok "$1" || log_err "$2"; }
+
+run_as_user() {
+    su - "$REAL_USER" -c "export HOME=$REAL_HOME; cd $REAL_HOME; $1"
+}
+
+# =============================================================================
+# PRE-LIMPIEZA
+# =============================================================================
+
+pre_limpieza() {
+    local hay=0
+    [[ -d "$MOSKOV_DIR" ]] && hay=1
+    [[ -d "$REAL_HOME/.config/bspwm" ]] && hay=1
+    [[ -d "$REAL_HOME/.config/polybar" ]] && hay=1
+
+    if [[ $hay -eq 1 ]]; then
+        if [[ $AUTO_MODE -eq 1 ]]; then
+            log_proc "Modo auto: eliminando entorno previo..."
+        else
+            echo ""
+            echo -e "    ${Y}[!] Entorno previo detectado en $REAL_HOME${RST}"
+            read -rp "    Eliminar estructura previa? (s/n): " confirm
+            [[ "$confirm" != "s" && "$confirm" != "S" ]] && { log_info "Omitido"; return; }
+        fi
+        log_proc "Eliminando entorno previo..."
+        rm -rf "$MOSKOV_DIR"
+        rm -rf "$REAL_HOME/.config/bspwm" "$REAL_HOME/.config/sxhkd"
+        rm -rf "$REAL_HOME/.config/polybar" "$REAL_HOME/.config/picom"
+        rm -rf "$REAL_HOME/.config/kitty" "$REAL_HOME/.config/rofi"
+        rm -rf "$REAL_HOME/.config/nvim" "$REAL_HOME/.config/neofetch"
+        rm -f "$REAL_HOME/.zshrc" "$REAL_HOME/.p10k.zsh" "$REAL_HOME/.xinitrc"
+        rm -rf "$REAL_HOME/.cache"
+        log_ok "Entorno previo eliminado"
+    fi
+}
+
+# =============================================================================
+# FASE 0: PRE-FLIGHT APT/DPKG AUTO-REPAIR
+# =============================================================================
+
+fase_preflight() {
+    banner
+    echo -e "  ${B}FASE 0: Pre-Flight - Saneamiento APT/DPKG${RST}\n"
+
+    log_proc "Eliminando procesos APT/DPKG residuales..."
     killall -9 apt apt-get dpkg 2>/dev/null || true
     fuser -k /var/lib/dpkg/lock 2>/dev/null || true
     fuser -k /var/lib/apt/lists/lock 2>/dev/null || true
     fuser -k /var/cache/apt/archives/lock 2>/dev/null || true
+    log_ok "Procesos residuales eliminados"
 
-    # Liberar candados residuales
-    log_info "Eliminando candados residuales..."
-    rm -f /var/lib/apt/lists/lock
-    rm -f /var/lib/dpkg/lock
-    rm -f /var/lib/dpkg/lock-frontend
-    rm -f /var/cache/apt/archives/lock
+    log_proc "Liberando candados..."
+    rm -f /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend /var/cache/apt/archives/lock
+    log_ok "Candados liberados"
 
-    # Reparar base de datos de dpkg
-    log_info "Reparando base de datos de dpkg..."
-    dpkg --configure -a --force-confdef --force-confold 2>/dev/null || true
+    log_proc "Reparando dpkg..."
+    dpkg --configure -a --force-confdef --force-confold >> "$LOG_FILE" 2>&1 || true
+    log_ok "dpkg reparado"
 
-    # Limpiar estado parcial de APT
-    apt-get -f install -y --force-yes 2>/dev/null || \
-        apt-get -f install -y 2>/dev/null || true
+    log_proc "Reparando dependencias..."
+    apt-get install -f -y "${APT_FLAGS[@]}" >> "$LOG_FILE" 2>&1 || true
+    apt-get clean >> "$LOG_FILE" 2>&1 || true
+    log_ok "Sistema de paquetes saneado"
 
-    log_ok "Pre-flight completado — APT/DPKG en estado limpio"
+    echo ""
+    log_ok "PRE-FLIGHT COMPLETADO"
 }
 
-##############################################################################
-# FASE 1: DETECCIÓN DEL ENTORNO GRÁFICO (Zero-Crash Display Logic)
-##############################################################################
-RUNNING_IN_XSESSION=false
-LIGHTDM_ACTIVE=false
+# =============================================================================
+# FASE 1: PURGA Y PREVENCION DE CONFLICTOS (X11-Aware)
+# =============================================================================
 
-detect_display_environment() {
-    log_phase "FASE 1: Detección del entorno gráfico"
+fase_purga() {
+    banner
+    echo -e "  ${B}FASE 1/8: Purga y prevencion de conflictos${RST}\n"
 
-    # Verificar si existe una sesión X11 activa
-    if [[ -n "${DISPLAY:-}" ]]; then
-        log_info "Variable DISPLAY detectada: $DISPLAY"
-        RUNNING_IN_XSESSION=true
-    fi
+    systemctl mask isc-dhcp-server isc-dhcp-server6 2>/dev/null || true
+    log_ok "Servicios conflictivos enmascarados"
 
-    # Verificar si hay un servidor X corriendo
-    if pgrep -x Xorg &>/dev/null || pgrep -x X &>/dev/null; then
-        log_info "Servidor Xorg activo detectado"
-        RUNNING_IN_XSESSION=true
-    fi
-
-    # Verificar LightDM
-    if pgrep -x lightdm &>/dev/null; then
-        log_info "LightDM está corriendo"
-        LIGHTDM_ACTIVE=true
-        RUNNING_IN_XSESSION=true
-    fi
-
-    # Verificar BSPWM
-    if pgrep -x bspwm &>/dev/null; then
-        log_info "BSPWM activo — sesión gráfica viva confirmada"
-        RUNNING_IN_XSESSION=true
-    fi
-
-    if [[ "$RUNNING_IN_XSESSION" == true ]]; then
-        log_warn "Ejecutando DENTRO de sesión gráfica — modo protegido activo"
-        log_warn "Se omitirá purga/reinstalación directa de Xorg/LightDM"
+    if [[ $GUI_ACTIVE -eq 1 ]]; then
+        log_warn "GUI activa - omitiendo purga de DMs"
     else
-        log_info "Ejecutando desde TTY/CLI — instalación base completa habilitada"
+        systemctl stop sddm gdm3 gdm display-manager 2>/dev/null || true
+        systemctl disable sddm gdm3 gdm 2>/dev/null || true
+        log_ok "DMs anteriores deshabilitados (TTY)"
     fi
+
+    rm -rf /etc/sddm.conf /etc/sddm.conf.d /var/lib/sddm 2>/dev/null
+    systemctl unmask NetworkManager 2>/dev/null || true
+    systemctl enable NetworkManager 2>/dev/null || true
+    log_ok "NetworkManager asegurado"
+
+    echo ""
+    log_ok "FASE 1 COMPLETADA"
 }
 
-##############################################################################
-# FASE 2: INSTALACIÓN DE PAQUETES (APT) — Aislamiento Modular
-##############################################################################
-APT_PHASE_SUCCESS=true
+# =============================================================================
+# FASE 2: PAQUETES COMPLETOS (Entorno + Pentesting + Desarrollo)
+# =============================================================================
 
-# Opciones globales de APT para modo no interactivo
-APT_OPTS=(
-    -y
-    -o Dpkg::Options::="--force-confdef"
-    -o Dpkg::Options::="--force-confold"
-    -o APT::Get::AllowUnauthenticated=true
-    -o Acquire::AllowInsecureRepositories=true
-)
+fase_paquetes() {
+    banner
+    echo -e "  ${B}FASE 2/8: Paquetes COMPLETOS (Zero-Block, X11-Aware)${RST}\n"
 
-install_packages_safe() {
-    local category="$1"
-    shift
-    local packages=("$@")
+    local APT_SUCCESS=0
 
-    log_info "Instalando categoría: ${category} (${#packages[@]} paquetes)"
+    {
+        log_proc "apt-get update..."
+        apt-get update -qq >> "$LOG_FILE" 2>&1 || true
 
-    if apt-get install "${APT_OPTS[@]}" "${packages[@]}" 2>&1; then
-        log_ok "Categoría '${category}' instalada correctamente"
-    else
-        log_warn "Algunos paquetes de '${category}' fallaron — continuando..."
-        # Intentar paquetes individuales como fallback
-        for pkg in "${packages[@]}"; do
-            apt-get install "${APT_OPTS[@]}" "$pkg" 2>/dev/null || \
-                log_warn "Paquete individual falló: $pkg (no crítico)"
-        done
-    fi
-}
+        # --- PAQUETES XORG/DISPLAY ---
+        local PKGS_XORG=(
+            xorg xserver-xorg-core xinit
+            lightdm lightdm-gtk-greeter
+        )
 
-phase_apt_install() {
-    log_phase "FASE 2: Instalación de paquetes (APT)"
+        # --- ENTORNO DE ESCRITORIO ---
+        local PKGS_DESKTOP=(
+            bspwm sxhkd polybar picom rofi
+            feh maim xclip xdotool xdo wmname i3lock neofetch x11-xserver-utils
+            flameshot imagemagick xterm gnome-terminal
+        )
 
-    # Actualizar repositorios
-    log_info "Actualizando repositorios..."
-    apt-get update -qq 2>/dev/null || {
-        log_warn "apt-get update tuvo advertencias — continuando"
+        # --- SHELL Y TERMINAL ---
+        local PKGS_SHELL=(
+            zsh zsh-autosuggestions zsh-syntax-highlighting fzf bat
+            tmux ranger htop iftop nload
+        )
+
+        # --- DESARROLLO ---
+        local PKGS_DEV=(
+            git curl wget stow build-essential
+            golang-go nodejs npm python3 python3-pip python3-dev
+            default-jdk ruby ruby-dev ruby-full
+            cmake meson ninja-build nasm
+            libncurses-dev libreadline-dev libssl-dev libsqlite3-dev
+            libpcap-dev libconfig-dev libev-dev libx11-xcb-dev
+            libxcb1-dev libxcb-ewmh-dev libxcb-icccm4-dev libxcb-randr0-dev
+            libxcb-util-dev libxcb-keysyms1-dev libxcb-shape0-dev
+            pkg-config autoconf libtool
+        )
+
+        # --- REDES Y SERVICIOS ---
+        local PKGS_NETWORK=(
+            net-tools nmap masscan netdiscover traceroute
+            samba nfs-common nfs-kernel-server sshfs cifs-utils
+            ufw gufw socat proxychains sshpass
+            network-manager network-manager-openvpn
+            network-manager-openconnect network-manager-vpnc
+            postfix postgresql sqlite3
+        )
+
+        # --- PENTESTING / SEGURIDAD (clone completo) ---
+        local PKGS_SECURITY=(
+            aircrack-ng bettercap binwalk cewl commix crunch
+            dmitry dnsenum enum4linux fcrackzip
+            gobuster hashcat hashid hping3 hydra
+            john joomscan macchanger mdk4
+            nikto nishang onesixtyone
+            smbmap smtp-user-enum sqlmap
+            tshark websploit wfuzz whois wireshark
+            metasploit-framework
+        )
+
+        # --- UTILIDADES ---
+        local PKGS_UTILS=(
+            unzip zip rsync p7zip-full
+            fonts-font-awesome brightnessctl pamixer
+            timeshift gparted remmina vim
+            flatpak torbrowser-launcher
+        )
+
+        # Instalar segun contexto grafico
+        if [[ $GUI_ACTIVE -eq 1 ]]; then
+            log_warn "GUI activa: Xorg sin --reinstall"
+            apt-get install -y "${APT_FLAGS[@]}" "${PKGS_XORG[@]}" >> "$LOG_FILE" 2>&1 || true
+        else
+            log_proc "Instalando Xorg completo (TTY)..."
+            apt-get install --reinstall -y "${APT_FLAGS[@]}" "${PKGS_XORG[@]}" >> "$LOG_FILE" 2>&1 || true
+        fi
+
+        log_proc "Instalando entorno de escritorio..."
+        apt-get install -y "${APT_FLAGS[@]}" "${PKGS_DESKTOP[@]}" >> "$LOG_FILE" 2>&1 || true
+
+        log_proc "Instalando shell y terminal..."
+        apt-get install -y "${APT_FLAGS[@]}" "${PKGS_SHELL[@]}" >> "$LOG_FILE" 2>&1 || true
+
+        log_proc "Instalando desarrollo..."
+        apt-get install -y "${APT_FLAGS[@]}" "${PKGS_DEV[@]}" >> "$LOG_FILE" 2>&1 || true
+
+        log_proc "Instalando redes y servicios..."
+        apt-get install -y "${APT_FLAGS[@]}" "${PKGS_NETWORK[@]}" >> "$LOG_FILE" 2>&1 || true
+
+        log_proc "Instalando herramientas de seguridad..."
+        apt-get install -y "${APT_FLAGS[@]}" "${PKGS_SECURITY[@]}" >> "$LOG_FILE" 2>&1 || true
+
+        log_proc "Instalando utilidades..."
+        apt-get install -y "${APT_FLAGS[@]}" "${PKGS_UTILS[@]}" >> "$LOG_FILE" 2>&1 || true
+
+        APT_SUCCESS=1
+
+        # LightDM como DM predeterminado
+        echo "lightdm shared/default-x-display-manager select lightdm" | debconf-set-selections 2>/dev/null || true
+        dpkg-reconfigure -f noninteractive lightdm >> "$LOG_FILE" 2>&1 || true
+        log_ok "LightDM forzado como predeterminado"
+
+        # lsd
+        log_proc "lsd..."
+        wget -q "https://github.com/lsd-rs/lsd/releases/download/v1.1.5/lsd-musl_1.1.5_amd64.deb" -O /tmp/lsd.deb 2>/dev/null || true
+        dpkg -i /tmp/lsd.deb >> "$LOG_FILE" 2>&1 || apt-get install -f -y "${APT_FLAGS[@]}" >> "$LOG_FILE" 2>&1 || true
+        rm -f /tmp/lsd.deb
+        log_ok "lsd instalado"
+
+    } || {
+        log_err "BLOQUE APT FALLO - continuando a dotfiles"
     }
 
-    # Upgrade del sistema (compatible con Parrot Security)
-    log_info "Actualizando sistema..."
-    if command -v parrot-upgrade &>/dev/null; then
-        parrot-upgrade -y 2>/dev/null || log_warn "parrot-upgrade tuvo advertencias"
-    else
-        apt-get upgrade "${APT_OPTS[@]}" 2>/dev/null || log_warn "apt upgrade tuvo advertencias"
-    fi
-
-    # ─── Paquetes base del sistema ───────────────────────────────────────
-    install_packages_safe "sistema-base" \
-        build-essential git curl wget unzip tar \
-        htop neofetch tree fzf ripgrep bat \
-        zsh tmux stow
-
-    # ─── Paquetes de entorno gráfico (condicional) ───────────────────────
-    if [[ "$RUNNING_IN_XSESSION" == true ]]; then
-        # Modo protegido: instalar componentes gráficos SIN purgar Xorg/LightDM
-        log_info "Modo protegido: instalando WM y utilidades sin tocar X/LightDM"
-        install_packages_safe "wm-protegido" \
-            bspwm sxhkd polybar rofi dunst picom \
-            feh nitrogen lxappearance \
-            kitty alacritty
-    else
-        # TTY/CLI: instalación completa incluyendo servidor gráfico
-        log_info "Modo TTY: instalación completa de stack gráfico"
-        install_packages_safe "xorg-display" \
-            xorg xserver-xorg xinit \
-            lightdm lightdm-gtk-greeter
-
-        install_packages_safe "wm-completo" \
-            bspwm sxhkd polybar rofi dunst picom \
-            feh nitrogen lxappearance \
-            kitty alacritty
-
-        # Habilitar LightDM para arranque automático
-        systemctl enable lightdm 2>/dev/null || \
-            log_warn "No se pudo habilitar lightdm (entorno sin systemd?)"
-    fi
-
-    # ─── Herramientas de desarrollo ──────────────────────────────────────
-    install_packages_safe "dev-tools" \
-        nodejs npm python3 python3-pip python3-venv \
-        docker.io docker-compose
-
-    # ─── Fuentes ─────────────────────────────────────────────────────────
-    install_packages_safe "fonts" \
-        fonts-firacode fonts-hack fonts-font-awesome \
-        fonts-noto-color-emoji
-
-    log_ok "Fase APT completada"
+    echo ""
+    log_ok "FASE 2 COMPLETADA"
 }
 
-##############################################################################
-# FASE 3: ESTRUCTURA DE DIRECTORIOS Y DOTFILES
-# Esta fase se ejecuta SIEMPRE, independientemente del resultado de APT
-##############################################################################
-phase_dotfiles_and_structure() {
-    log_phase "FASE 3: Estructura de directorios y dotfiles"
+# =============================================================================
+# FASE 3: SESION X11 + BSPWM
+# =============================================================================
 
-    # ─── Crear estructura Moskov ─────────────────────────────────────────
-    log_info "Creando estructura ~/Desktop/Moskov/..."
-    local moskov_dirs=(
-        "${REAL_HOME}/Desktop/Moskov"
-        "${REAL_HOME}/Desktop/Moskov/Kiro"
-        "${REAL_HOME}/Desktop/Moskov/Projects"
-        "${REAL_HOME}/Desktop/Moskov/Scripts"
-        "${REAL_HOME}/Desktop/Moskov/Tools"
-        "${REAL_HOME}/Desktop/Moskov/Wallpapers"
-        "${REAL_HOME}/Desktop/Moskov/Resources"
-    )
+fase_xsession() {
+    banner
+    echo -e "  ${B}FASE 3/8: Sesion BSPWM para LightDM${RST}\n"
 
-    for dir in "${moskov_dirs[@]}"; do
-        mkdir -p "$dir"
-        log_ok "Creado: $dir"
-    done
-
-    # ─── Crear estructura de configuración ───────────────────────────────
-    log_info "Creando estructura ~/.config/..."
-    local config_dirs=(
-        "${REAL_HOME}/.config/bspwm"
-        "${REAL_HOME}/.config/sxhkd"
-        "${REAL_HOME}/.config/polybar"
-        "${REAL_HOME}/.config/picom"
-        "${REAL_HOME}/.config/kitty"
-        "${REAL_HOME}/.config/rofi"
-        "${REAL_HOME}/.config/dunst"
-        "${REAL_HOME}/.config/alacritty"
-        "${REAL_HOME}/.config/neofetch"
-        "${REAL_HOME}/.config/autostart"
-    )
-
-    for dir in "${config_dirs[@]}"; do
-        mkdir -p "$dir"
-    done
-    log_ok "Estructura ~/.config/ creada"
-
-    # ─── Dotfiles base (bspwmrc) ─────────────────────────────────────────
-    log_info "Desplegando dotfiles base..."
-
-    # bspwmrc
-    cat > "${REAL_HOME}/.config/bspwm/bspwmrc" << 'EOF'
-#!/bin/sh
-# Moskov BSPWM Configuration v3.0
-pgrep -x sxhkd > /dev/null || sxhkd &
-pgrep -x picom > /dev/null || picom --config ~/.config/picom/picom.conf &
-pgrep -x polybar > /dev/null || ~/.config/polybar/launch.sh &
-pgrep -x dunst > /dev/null || dunst &
-
-# Monitors
-bspc monitor -d I II III IV V VI VII VIII IX X
-
-# Global settings
-bspc config border_width          2
-bspc config window_gap            10
-bspc config split_ratio           0.52
-bspc config borderless_monocle    true
-bspc config gapless_monocle       true
-bspc config focus_follows_pointer true
-
-# Colors
-bspc config normal_border_color   "#44475a"
-bspc config active_border_color   "#bd93f9"
-bspc config focused_border_color  "#ff79c6"
-
-# Rules
-bspc rule -a Firefox desktop='^2'
-bspc rule -a Code desktop='^3'
-
-# Wallpaper
-feh --bg-fill ~/Desktop/Moskov/Wallpapers/wallpaper.jpg 2>/dev/null || \
-    nitrogen --restore 2>/dev/null || true
-EOF
-    chmod +x "${REAL_HOME}/.config/bspwm/bspwmrc"
-
-    # sxhkdrc
-    cat > "${REAL_HOME}/.config/sxhkd/sxhkdrc" << 'EOF'
-# Moskov SXHKD Configuration v3.0
-
-# Terminal
-super + Return
-    kitty
-
-# Program launcher
-super + d
-    rofi -show drun -theme ~/.config/rofi/config.rasi
-
-# Close/kill window
-super + {_,shift + }q
-    bspc node -{c,k}
-
-# Reload sxhkd
-super + Escape
-    pkill -USR1 -x sxhkd
-
-# Reload bspwm
-super + shift + r
-    bspc wm -r
-
-# Focus/swap windows
-super + {h,j,k,l}
-    bspc node -f {west,south,north,east}
-
-super + shift + {h,j,k,l}
-    bspc node -s {west,south,north,east}
-
-# Switch desktops
-super + {1-9,0}
-    bspc desktop -f '^{1-9,10}'
-
-# Move window to desktop
-super + shift + {1-9,0}
-    bspc node -d '^{1-9,10}'
-
-# Toggle floating/fullscreen
-super + f
-    bspc node -t '~fullscreen'
-
-super + space
-    bspc node -t '~floating'
-
-# Screenshot
-Print
-    scrot ~/Desktop/Moskov/Screenshots/%Y-%m-%d_%H-%M-%S.png
-
-# Lock screen
-super + shift + x
-    betterlockscreen -l
-EOF
-
-    # picom.conf
-    cat > "${REAL_HOME}/.config/picom/picom.conf" << 'EOF'
-# Moskov Picom Configuration v3.0
-backend = "glx";
-vsync = true;
-shadow = true;
-shadow-radius = 12;
-shadow-offset-x = -7;
-shadow-offset-y = -7;
-shadow-opacity = 0.6;
-fading = true;
-fade-delta = 4;
-fade-in-step = 0.03;
-fade-out-step = 0.03;
-corner-radius = 8;
-rounded-corners-exclude = [ "class_g = 'Polybar'" ];
-opacity-rule = [ "90:class_g = 'kitty'" ];
-EOF
-
-    # Polybar launch script
-    cat > "${REAL_HOME}/.config/polybar/launch.sh" << 'EOF'
-#!/bin/bash
-# Moskov Polybar Launcher
-killall -q polybar
-while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
-polybar moskov-bar 2>&1 | tee -a /tmp/polybar.log & disown
-EOF
-    chmod +x "${REAL_HOME}/.config/polybar/launch.sh"
-
-    # Polybar config
-    cat > "${REAL_HOME}/.config/polybar/config.ini" << 'EOF'
-; Moskov Polybar Configuration v3.0
-[colors]
-background = #1e1e2e
-foreground = #cdd6f4
-primary = #f5c2e7
-secondary = #89b4fa
-alert = #f38ba8
-
-[bar/moskov-bar]
-width = 100%
-height = 28pt
-radius = 0
-background = ${colors.background}
-foreground = ${colors.foreground}
-padding-left = 1
-padding-right = 2
-module-margin = 1
-font-0 = "FiraCode Nerd Font:size=10;2"
-font-1 = "Font Awesome 6 Free:style=Solid:size=10;2"
-modules-left = bspwm
-modules-center = date
-modules-right = cpu memory pulseaudio battery
-
-[module/bspwm]
-type = internal/bspwm
-label-focused = %name%
-label-focused-background = ${colors.primary}
-label-focused-foreground = ${colors.background}
-label-focused-padding = 1
-
-[module/date]
-type = internal/date
-interval = 1
-date = %Y-%m-%d
-time = %H:%M:%S
-label = %date% %time%
-
-[module/cpu]
-type = internal/cpu
-interval = 2
-label = CPU %percentage%%
-
-[module/memory]
-type = internal/memory
-interval = 2
-label = RAM %percentage_used%%
-EOF
-
-    # Kitty config
-    cat > "${REAL_HOME}/.config/kitty/kitty.conf" << 'EOF'
-# Moskov Kitty Configuration v3.0
-font_family      FiraCode Nerd Font
-bold_font        auto
-italic_font      auto
-font_size        11.0
-window_padding_width 8
-background_opacity 0.92
-confirm_os_window_close 0
-enable_audio_bell no
-cursor_shape beam
-shell zsh
-
-# Catppuccin Mocha Theme
-foreground #CDD6F4
-background #1E1E2E
-cursor #F5E0DC
-selection_foreground #1E1E2E
-selection_background #F5E0DC
-color0 #45475A
-color8 #585B70
-color1 #F38BA8
-color9 #F38BA8
-color2 #A6E3A1
-color10 #A6E3A1
-color3 #F9E2AF
-color11 #F9E2AF
-color4 #89B4FA
-color12 #89B4FA
-color5 #F5C2E7
-color13 #F5C2E7
-color6 #94E2D5
-color14 #94E2D5
-color7 #BAC2DE
-color15 #A6ADC8
-EOF
-
-    # ─── Session Launcher: /usr/bin/bspwm-session ───────────────────────
-    # Este archivo es ejecutado por LightDM al iniciar sesión BSPWM
-    # Se despliega con rutas correctas para evitar "sxhkd: not found"
-    log_info "Desplegando /usr/bin/bspwm-session (session launcher)..."
-    cat > /usr/bin/bspwm-session << 'EOF'
+    # --- bspwm-session: script ultra-defensivo ---
+    cat > /usr/bin/bspwm-session <<BSEOF
 #!/bin/sh
 # Moskov Environment - BSPWM Session Launcher
-# Ejecutado por LightDM al iniciar sesion
+# Este script es ejecutado por LightDM al iniciar sesion
 
-# 1. Garantizar HOME y PATH completo (incluye /usr/local/bin)
-export HOME="${HOME:-$(getent passwd $(id -un) | cut -d: -f6)}"
+# 1. Garantizar HOME (LightDM a veces no la exporta)
+export HOME="\${HOME:-\$(getent passwd \$(id -un) | cut -d: -f6)}"
 export XDG_CURRENT_DESKTOP="bspwm"
-export XDG_CONFIG_HOME="$HOME/.config"
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+export XDG_CONFIG_HOME="\$HOME/.config"
 
 # 2. Log de depuracion
-mkdir -p "$HOME/install_logs"
-LOGF="$HOME/install_logs/bspwm-session.log"
-echo "=== [$(date)] SESSION START ===" >> "$LOGF"
-echo "USER=$(id -un) HOME=$HOME" >> "$LOGF"
-echo "PATH=$PATH" >> "$LOGF"
+mkdir -p "\$HOME/install_logs"
+LOGF="\$HOME/install_logs/bspwm-session.log"
+echo "=== [\$(date)] SESSION START ===" >> "\$LOGF"
+echo "USER=\$(id -un) HOME=\$HOME" >> "\$LOGF"
+echo "PATH=\$PATH" >> "\$LOGF"
 
 # 3. Verificar que bspwmrc existe y es ejecutable
-BSPWMRC="$HOME/.config/bspwm/bspwmrc"
-if [ ! -f "$BSPWMRC" ]; then
-    echo "ERROR: $BSPWMRC no existe" >> "$LOGF"
-    mkdir -p "$HOME/.config/bspwm"
-    echo '#!/bin/sh' > "$BSPWMRC"
-    echo 'bspc monitor -d I II III IV V' >> "$BSPWMRC"
+BSPWMRC="\$HOME/.config/bspwm/bspwmrc"
+if [ ! -f "\$BSPWMRC" ]; then
+    echo "ERROR: \$BSPWMRC no existe" >> "\$LOGF"
+    # Crear uno minimo para que bspwm no muera
+    mkdir -p "\$HOME/.config/bspwm"
+    echo '#!/bin/sh' > "\$BSPWMRC"
+    echo 'bspc monitor -d I II III IV V' >> "\$BSPWMRC"
 fi
-chmod +x "$BSPWMRC"
+chmod +x "\$BSPWMRC"
 
-# 4. Lanzar sxhkd con ruta absoluta y config correcta
-SXHKDRC="$HOME/.config/sxhkd/sxhkdrc"
-if [ -f "$SXHKDRC" ]; then
-    /usr/local/bin/sxhkd -c "$SXHKDRC" >> "$LOGF" 2>&1 &
-    echo "sxhkd PID=$!" >> "$LOGF"
+# 4. Lanzar sxhkd
+SXHKDRC="\$HOME/.config/sxhkd/sxhkdrc"
+if [ -f "\$SXHKDRC" ]; then
+    sxhkd -c "\$SXHKDRC" >> "\$LOGF" 2>&1 &
+    echo "sxhkd PID=\$!" >> "\$LOGF"
 else
-    echo "WARN: sxhkdrc no encontrado en $SXHKDRC" >> "$LOGF"
-    # Lanzar sxhkd sin config explícita (usará default)
-    /usr/local/bin/sxhkd >> "$LOGF" 2>&1 &
-    echo "sxhkd (sin config) PID=$!" >> "$LOGF"
+    echo "WARN: sxhkdrc no encontrado" >> "\$LOGF"
 fi
 
-# 5. Ejecutar bspwm (exec mantiene la sesion viva para LightDM)
-echo "Launching: bspwm -c $BSPWMRC" >> "$LOGF"
-exec /usr/local/bin/bspwm -c "$BSPWMRC"
-EOF
-    chmod +x /usr/bin/bspwm-session
-    log_ok "bspwm-session desplegado en /usr/bin/"
+# 5. Ejecutar bspwm (DEBE ser exec para mantener la sesion viva)
+echo "Launching: bspwm -c \$BSPWMRC" >> "\$LOGF"
+exec bspwm -c "\$BSPWMRC"
+BSEOF
+    chmod 755 /usr/bin/bspwm-session
+    log_ok "bspwm-session creado"
 
-    # ─── Xsession .desktop para LightDM ─────────────────────────────────
-    log_info "Desplegando bspwm.desktop para LightDM..."
+    # --- Registrar sesion en LightDM ---
     mkdir -p /usr/share/xsessions
-    cat > /usr/share/xsessions/bspwm.desktop << 'EOF'
+    # Eliminar otros .desktop de bspwm que el paquete APT pueda haber creado
+    rm -f /usr/share/xsessions/bspwm-session.desktop 2>/dev/null
+
+    cat > /usr/share/xsessions/bspwm.desktop <<'EOF'
 [Desktop Entry]
-Name=bspwm (Moskov)
-Comment=Binary space partitioning window manager - Moskov Environment
+Name=BSPWM
+Comment=Binary space partitioning window manager
 Exec=/usr/bin/bspwm-session
 Type=Application
-Keywords=tiling;wm;windowmanager;window;manager;
+DesktopNames=BSPWM
+Keywords=tiling;wm;bspwm;
 EOF
-    log_ok "bspwm.desktop desplegado en /usr/share/xsessions/"
+    chmod 644 /usr/share/xsessions/bspwm.desktop
+    log_ok "bspwm.desktop registrado"
 
-    log_ok "Dotfiles y session launcher desplegados correctamente"
-}
+    # --- Forzar LightDM a usar sesion BSPWM por defecto ---
+    mkdir -p /etc/lightdm
+    cat > /etc/lightdm/lightdm.conf <<'EOF'
+[Seat:*]
+autologin-user=
+user-session=bspwm
+greeter-session=lightdm-gtk-greeter
+EOF
+    log_ok "LightDM configurado: user-session=bspwm"
 
-##############################################################################
-# FASE 4: PERMISOS Y PROPIEDAD FINAL
-##############################################################################
-phase_permissions() {
-    log_phase "FASE 4: Asignación de permisos y propiedad"
+    # --- .xsession como fallback absoluto ---
+    cat > "$REAL_HOME/.xsession" <<'XEOF'
+#!/bin/sh
+exec /usr/bin/bspwm-session
+XEOF
+    chmod +x "$REAL_HOME/.xsession"
+    chown "$REAL_USER:$REAL_USER" "$REAL_HOME/.xsession"
+    log_ok ".xsession fallback"
 
-    # Asignar propiedad recursiva al usuario real
-    log_info "Aplicando chown -R ${REAL_USER}:${REAL_USER} en ${REAL_HOME}..."
-    chown -R "${REAL_USER}:${REAL_USER}" "${REAL_HOME}/Desktop/Moskov" 2>/dev/null || true
-    chown -R "${REAL_USER}:${REAL_USER}" "${REAL_HOME}/.config" 2>/dev/null || true
-
-    # Permisos ejecutables en scripts
-    log_info "Asignando permisos ejecutables a scripts..."
-    find "${REAL_HOME}/.config/bspwm" -name "*.sh" -o -name "bspwmrc" | \
-        xargs -r chmod +x 2>/dev/null || true
-    find "${REAL_HOME}/.config/polybar" -name "*.sh" | \
-        xargs -r chmod +x 2>/dev/null || true
-    find "${REAL_HOME}/Desktop/Moskov/Scripts" -name "*.sh" | \
-        xargs -r chmod +x 2>/dev/null || true
-
-    # Verificar propietario final
-    local owner
-    owner=$(stat -c '%U' "${REAL_HOME}/Desktop/Moskov" 2>/dev/null || echo "unknown")
-    if [[ "$owner" == "$REAL_USER" ]]; then
-        log_ok "Propiedad correcta: ${REAL_USER} sobre ~/Desktop/Moskov"
+    # --- Habilitar LightDM ---
+    if [[ $GUI_ACTIVE -eq 1 ]]; then
+        systemctl enable lightdm >> "$LOG_FILE" 2>&1 || true
     else
-        log_warn "Propiedad inesperada: ${owner} (esperado: ${REAL_USER})"
+        systemctl disable sddm gdm3 2>/dev/null || true
+        systemctl mask sddm gdm3 2>/dev/null || true
+        systemctl unmask lightdm 2>/dev/null || true
+        systemctl enable lightdm >> "$LOG_FILE" 2>&1 || true
+        systemctl set-default graphical.target >> "$LOG_FILE" 2>&1 || true
     fi
+    log_ok "LightDM habilitado"
 
-    log_ok "Permisos y propiedad asignados"
+    echo ""
+    log_ok "FASE 3 COMPLETADA"
 }
 
-##############################################################################
-# FASE 5: RESUMEN Y FINALIZACIÓN
-##############################################################################
-phase_summary() {
-    log_phase "FASE 5: Resumen de instalación"
+# =============================================================================
+# FASE 4: BINARIOS PORTABLES (Kitty, Neovim, P10k, fzf)
+# =============================================================================
 
-    echo ""
-    echo -e "  ${GREEN}╔══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "  ${GREEN}║  $SCRIPT_NAME v$SCRIPT_VERSION — Instalación Completada  ║${NC}"
-    echo -e "  ${GREEN}╚══════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "  Usuario:       ${BOLD}${REAL_USER}${NC}"
-    echo -e "  Home:          ${BOLD}${REAL_HOME}${NC}"
-    echo -e "  Sesión gráfica: ${BOLD}${RUNNING_IN_XSESSION}${NC}"
-    echo ""
+fase_binarios() {
+    banner
+    echo -e "  ${B}FASE 4/8: Binarios portables${RST}\n"
 
-    if [[ "$RUNNING_IN_XSESSION" == true ]]; then
-        echo -e "  ${YELLOW}Nota: Se ejecutó en modo protegido (sesión X11 activa).${NC}"
-        echo -e "  ${YELLOW}Xorg/LightDM no fueron modificados para proteger tu sesión.${NC}"
-        echo -e "  ${YELLOW}Reinicia la sesión para cargar la nueva configuración.${NC}"
+    # Kitty
+    log_proc "Kitty..."
+    rm -rf /opt/kitty; mkdir -p /opt/kitty
+    curl -sL https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin dest=/opt/kitty launch=n >> "$LOG_FILE" 2>&1 || true
+    [[ -d /opt/kitty/kitty.app ]] && cp -r /opt/kitty/kitty.app/* /opt/kitty/ && rm -rf /opt/kitty/kitty.app
+    ln -sf /opt/kitty/bin/kitty /usr/local/bin/kitty
+    log_ok "Kitty"
+
+    # Neovim
+    log_proc "Neovim..."
+    rm -rf /opt/nvim; mkdir -p /opt/nvim
+    wget -q "https://github.com/neovim/neovim/releases/download/v0.10.3/nvim-linux-x86_64.tar.gz" -O /tmp/nvim.tar.gz 2>/dev/null || true
+    if [[ -f /tmp/nvim.tar.gz ]]; then
+        tar -xzf /tmp/nvim.tar.gz -C /opt/nvim/ --strip-components=1 >> "$LOG_FILE" 2>&1
+        ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
+        rm -f /tmp/nvim.tar.gz
+        log_ok "Neovim"
     else
-        echo -e "  ${CYAN}LightDM habilitado. Reinicia para iniciar sesión gráfica:${NC}"
-        echo -e "  ${BOLD}  sudo reboot${NC}"
-    fi
-    echo ""
-}
-
-##############################################################################
-# EJECUCIÓN PRINCIPAL — Orquestador de fases con aislamiento modular
-##############################################################################
-main() {
-    local start_time
-    start_time=$(date +%s)
-
-    echo ""
-    echo -e "${BOLD}${CYAN}══════════════════════════════════════════════════════════════${NC}"
-    echo -e "${BOLD}${CYAN}  $SCRIPT_NAME v$SCRIPT_VERSION — Zero-Intervention Installer${NC}"
-    echo -e "${BOLD}${CYAN}══════════════════════════════════════════════════════════════${NC}"
-    echo ""
-
-    # FASE 0: Pre-flight (APT/DPKG repair)
-    phase_preflight
-
-    # FASE 1: Detectar entorno gráfico
-    detect_display_environment
-
-    # FASE 2: Instalación de paquetes (aislada — fallos no bloquean fase 3)
-    phase_apt_install || {
-        log_warn "Fase APT reportó errores no críticos — continuando a dotfiles"
-        APT_PHASE_SUCCESS=false
-    }
-
-    # FASE 3: Dotfiles y estructura (se ejecuta SIEMPRE)
-    phase_dotfiles_and_structure
-
-    # FASE 4: Permisos (se ejecuta SIEMPRE)
-    phase_permissions
-
-    # FASE 5: Resumen
-    phase_summary
-
-    local end_time elapsed
-    end_time=$(date +%s)
-    elapsed=$((end_time - start_time))
-    log_info "Tiempo total de ejecución: ${elapsed} segundos"
-
-    if [[ "$APT_PHASE_SUCCESS" == false ]]; then
-        log_warn "Instalación completada con advertencias en APT."
-        log_warn "Dotfiles y permisos se aplicaron correctamente."
-        exit 0  # Exit 0 porque dotfiles/permisos son lo crítico
+        log_err "Error descargando Neovim"
     fi
 
-    log_ok "Instalación completada sin errores."
-    exit 0
+    # Powerlevel10k
+    log_proc "Powerlevel10k..."
+    rm -rf "$REAL_HOME/powerlevel10k"
+    run_as_user "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $REAL_HOME/powerlevel10k" >> "$LOG_FILE" 2>&1 || true
+    log_ok "Powerlevel10k"
+
+    # fzf
+    log_proc "fzf..."
+    rm -rf "$REAL_HOME/.fzf"
+    run_as_user "git clone --depth 1 https://github.com/junegunn/fzf.git $REAL_HOME/.fzf && $REAL_HOME/.fzf/install --all" >> "$LOG_FILE" 2>&1 || true
+    log_ok "fzf"
+
+    # Plugin sudo zsh
+    mkdir -p /usr/share/zsh-sudo
+    wget -q "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/plugins/sudo/sudo.plugin.zsh" \
+        -O /usr/share/zsh-sudo/sudo.plugin.zsh 2>/dev/null || true
+    log_ok "Plugin sudo zsh"
+
+    echo ""
+    log_ok "FASE 4 COMPLETADA"
 }
 
-# Ejecutar
-main "$@"
+# =============================================================================
+# FASE 5: HERRAMIENTAS MANUALES (/opt/ + gems + pip)
+# =============================================================================
+# Instala todo lo que NO viene de APT: i3lock-fancy, impacket, pspy,
+# rofi-themes, ngrok, evil-winrm, wpscan, etc.
+
+fase_herramientas() {
+    banner
+    echo -e "  ${B}FASE 5/8: Herramientas manuales (opt, gems, pip)${RST}\n"
+
+    # i3lock-fancy
+    log_proc "i3lock-fancy..."
+    if [[ ! -d /opt/i3lock-fancy ]]; then
+        git clone https://github.com/meskarune/i3lock-fancy.git /opt/i3lock-fancy >> "$LOG_FILE" 2>&1 || true
+        ln -sf /opt/i3lock-fancy/i3lock-fancy /usr/local/bin/i3lock-fancy
+    fi
+    log_ok "i3lock-fancy"
+
+    # Rofi themes collection
+    log_proc "Rofi themes..."
+    if [[ ! -d /opt/rofi-themes-collection ]]; then
+        git clone --depth=1 https://github.com/newmanls/rofi-themes-collection.git /opt/rofi-themes-collection >> "$LOG_FILE" 2>&1 || true
+    fi
+    log_ok "Rofi themes"
+
+    # Impacket (Python)
+    log_proc "Impacket..."
+    if [[ ! -d /opt/impacket ]]; then
+        git clone https://github.com/fortra/impacket.git /opt/impacket >> "$LOG_FILE" 2>&1 || true
+        pip3 install /opt/impacket/ --break-system-packages >> "$LOG_FILE" 2>&1 || true
+    fi
+    log_ok "Impacket"
+
+    # pspy (binarios pre-compilados)
+    log_proc "pspy..."
+    mkdir -p /opt/pspy
+    if [[ ! -f /opt/pspy/pspy64 ]]; then
+        wget -q "https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64" -O /opt/pspy/pspy64 2>/dev/null || true
+        wget -q "https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32" -O /opt/pspy/pspy32 2>/dev/null || true
+        chmod +x /opt/pspy/pspy64 /opt/pspy/pspy32 2>/dev/null || true
+    fi
+    log_ok "pspy"
+
+    # Ngrok
+    log_proc "Ngrok..."
+    if ! command -v ngrok &>/dev/null; then
+        wget -q "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz" -O /tmp/ngrok.tgz 2>/dev/null || true
+        if [[ -f /tmp/ngrok.tgz ]]; then
+            tar -xzf /tmp/ngrok.tgz -C /usr/local/bin/ >> "$LOG_FILE" 2>&1
+            rm -f /tmp/ngrok.tgz
+        fi
+    fi
+    log_ok "Ngrok"
+
+    # Evil-WinRM (Ruby gem)
+    log_proc "Evil-WinRM..."
+    gem install evil-winrm >> "$LOG_FILE" 2>&1 || true
+    log_ok "Evil-WinRM"
+
+    # WPScan (Ruby gem)
+    log_proc "WPScan..."
+    gem install wpscan >> "$LOG_FILE" 2>&1 || true
+    log_ok "WPScan"
+
+    # Python tools via pip
+    log_proc "Python tools (pyftpdlib, impacket scripts)..."
+    pip3 install pyftpdlib pycryptodome requests beautifulsoup4 --break-system-packages >> "$LOG_FILE" 2>&1 || true
+    log_ok "Python tools"
+
+    echo ""
+    log_ok "FASE 5 COMPLETADA"
+}
+
+# =============================================================================
+# FASE 6: DESPLIEGUE DE CONFIGURACIONES + APPS
+# =============================================================================
+
+fase_despliegue() {
+    banner
+    echo -e "  ${B}FASE 6/8: Despliegue COMPLETO en $REAL_HOME${RST}\n"
+
+    # Estructura de directorios
+    log_proc "Creando estructura de directorios..."
+    mkdir -p "$CIBER_DIR"/{1_Scripts/{bash,python,generadores,go/netaudit,servicios},2_Laboratorios/{Redes/capturas,HTB,Network_Drive},3_Herramientas/{Escaneo,WiFi,Phishing,Movil,OSINT,Instaladores},4_Servicios/Conexiones_Servicios/{FTP,SSH,Unidades_Compartidas/{logs,credenciales,backups,montajes,configuracion},SMTP},5_Wordlists,6_Documentos,7_VPN/{HTB,TPLink}}
+    mkdir -p "$MOSKOV_DIR"/{Apps/Update/logs,Fondo_Pantalla,Kiro}
+    mkdir -p "$REAL_HOME"/{Documentos/OptimizacionEntorno/logs,.config/bin,.local/share/fonts}
+    touch "$REAL_HOME/.config/bin/target"
+    log_ok "Estructura creada"
+
+    # Copiar scripts de ciberseguridad
+    log_proc "Copiando scripts..."
+    local SRC=""
+    [[ -d "$REPO_DIR/scripts_estudio/1_Scripts" ]] && SRC="$REPO_DIR/scripts_estudio/1_Scripts"
+    [[ -z "$SRC" && -d "$REPO_DIR/1_Scripts" ]] && SRC="$REPO_DIR/1_Scripts"
+    if [[ -n "$SRC" ]]; then
+        for sub in servicios python bash generadores go; do
+            [[ -d "$SRC/$sub" ]] && cp -rf "$SRC/$sub/." "$CIBER_DIR/1_Scripts/$sub/" 2>/dev/null
+        done
+        log_ok "Scripts copiados"
+    else
+        log_err "Fuente de scripts no encontrada"
+    fi
+
+    # Desplegar Apps (scripts de instalacion de aplicaciones)
+    log_proc "Desplegando carpeta Apps..."
+    if [[ -d "$REPO_DIR/Apps" ]]; then
+        cp -rf "$REPO_DIR/Apps/." "$MOSKOV_DIR/Apps/" 2>/dev/null
+        find "$MOSKOV_DIR/Apps" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+        log_ok "Apps desplegadas ($MOSKOV_DIR/Apps/)"
+    fi
+
+    # Desplegar configs WM
+    log_proc "Desplegando configs -> ~/.config/..."
+    local CFGS=(bspwm sxhkd polybar picom kitty rofi nvim neofetch)
+    for cfg in "${CFGS[@]}"; do
+        local S=""
+        [[ -d "$REPO_DIR/$cfg/.config/$cfg" ]] && S="$REPO_DIR/$cfg/.config/$cfg"
+        [[ -z "$S" && -d "$REPO_DIR/$cfg" ]] && S="$REPO_DIR/$cfg"
+        if [[ -n "$S" && -d "$S" ]]; then
+            rm -rf "$REAL_HOME/.config/$cfg"
+            cp -r "$S" "$REAL_HOME/.config/$cfg"
+            log_info "  -> $cfg"
+        fi
+    done
+    log_ok "Configs desplegadas"
+
+    # Wallpaper
+    if [[ -f "$REPO_DIR/wallpaper/fondo.jpeg" ]]; then
+        mkdir -p "$MOSKOV_DIR/Fondo_Pantalla"
+        cp -f "$REPO_DIR/wallpaper/fondo.jpeg" "$MOSKOV_DIR/Fondo_Pantalla/fondo.jpeg"
+        log_ok "Wallpaper desplegado"
+    fi
+
+    # Dotfiles
+    [[ -f "$REPO_DIR/zshrc" ]] && cp -f "$REPO_DIR/zshrc" "$REAL_HOME/.zshrc" && log_ok ".zshrc"
+    [[ -f "$REPO_DIR/zsh/.p10k.zsh" ]] && cp -f "$REPO_DIR/zsh/.p10k.zsh" "$REAL_HOME/.p10k.zsh" && log_ok ".p10k.zsh"
+
+    echo ""
+    log_ok "FASE 6 COMPLETADA"
+}
+
+# =============================================================================
+# FASE 7: PERMISOS, FUENTES Y PREVENCION DE REBOTE LOGIN
+# =============================================================================
+
+fase_permisos() {
+    banner
+    echo -e "  ${B}FASE 7/8: Permisos, fuentes y blindaje (IMPERATIVO)${RST}\n"
+
+    log_proc "Permisos de ejecucion..."
+    chmod +x "$REAL_HOME/.config/bspwm/bspwmrc" 2>/dev/null || true
+    chmod +x "$REAL_HOME/.config/sxhkd/sxhkdrc" 2>/dev/null || true
+    chmod +x "$REAL_HOME/.config/polybar/launch.sh" 2>/dev/null || true
+    find "$REAL_HOME/.config/bspwm/scripts" -type f -exec chmod +x {} \; 2>/dev/null || true
+    find "$REAL_HOME/.config/polybar/scripts" -type f -exec chmod +x {} \; 2>/dev/null || true
+    find "$REAL_HOME/.config/sxhkd" -type f -exec chmod +x {} \; 2>/dev/null || true
+    find "$CIBER_DIR/1_Scripts" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+    find "$CIBER_DIR/1_Scripts" -name "*.py" -exec chmod +x {} \; 2>/dev/null || true
+    log_ok "Permisos aplicados"
+
+    # Validar archivos criticos
+    log_proc "Validando archivos criticos..."
+    for f in "$REAL_HOME/.config/bspwm/bspwmrc" "$REAL_HOME/.config/sxhkd/sxhkdrc"; do
+        if [[ ! -f "$f" ]]; then
+            log_err "CRITICO FALTANTE: $f"
+        elif [[ ! -x "$f" ]]; then
+            chmod +x "$f"
+            log_warn "Permisos corregidos: $f"
+        else
+            log_info "  OK: $f"
+        fi
+    done
+
+    # Nerd Fonts
+    local FONTS_DIR="$REAL_HOME/.local/share/fonts"
+    mkdir -p "$FONTS_DIR"
+    log_proc "Nerd Fonts..."
+    wget -q "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Hack.zip" -O /tmp/Hack.zip 2>/dev/null || true
+    [[ -f /tmp/Hack.zip ]] && unzip -o /tmp/Hack.zip -d "$FONTS_DIR/" >> "$LOG_FILE" 2>&1 && rm -f /tmp/Hack.zip
+    wget -q "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.zip" -O /tmp/JBM.zip 2>/dev/null || true
+    [[ -f /tmp/JBM.zip ]] && unzip -o /tmp/JBM.zip -d "$FONTS_DIR/" >> "$LOG_FILE" 2>&1 && rm -f /tmp/JBM.zip
+    [[ -d "$REPO_DIR/polybar/.config/polybar/fonts" ]] && cp -f "$REPO_DIR/polybar/.config/polybar/fonts/"* "$FONTS_DIR/" 2>/dev/null || true
+    fc-cache -fv >> "$LOG_FILE" 2>&1 || true
+    log_ok "Fuentes instaladas"
+
+    # Limpiar X11 residuales
+    log_proc "Limpiando X11 residuales..."
+    rm -f "$REAL_HOME/.Xauthority" "$REAL_HOME/.xsession-errors"* "$REAL_HOME/.ICEauthority"
+    log_ok "X11 limpio"
+
+    # CHOWN IMPERATIVO FINAL
+    log_proc "chown -R $REAL_USER:$REAL_USER $REAL_HOME..."
+    chown -R "$REAL_USER:$REAL_USER" "$REAL_HOME"
+    if [[ $? -eq 0 ]]; then
+        log_ok "Propiedad asignada a $REAL_USER"
+    else
+        log_err "ERROR en chown"
+    fi
+
+    echo ""
+    log_ok "FASE 7 COMPLETADA"
+}
+
+# =============================================================================
+# FASE 8: SHELL ZSH + FIREWALL + COMANDO UPDATE
+# =============================================================================
+
+fase_final() {
+    banner
+    echo -e "  ${B}FASE 8/8: Finalizacion${RST}\n"
+
+    # zsh como shell
+    local ZSH_PATH
+    ZSH_PATH=$(which zsh 2>/dev/null || true)
+    if [[ -n "$ZSH_PATH" ]]; then
+        grep -qx "$ZSH_PATH" /etc/shells 2>/dev/null || echo "$ZSH_PATH" >> /etc/shells
+        chsh -s "$ZSH_PATH" "$REAL_USER" >> "$LOG_FILE" 2>&1 || true
+        log_ok "Shell: zsh"
+    else
+        log_err "zsh no encontrado"
+    fi
+
+    # UFW
+    log_proc "UFW..."
+    ufw --force reset >> "$LOG_FILE" 2>&1 || true
+    ufw default deny incoming >> "$LOG_FILE" 2>&1 || true
+    ufw default allow outgoing >> "$LOG_FILE" 2>&1 || true
+    ufw allow 22/tcp comment 'SSH' >> "$LOG_FILE" 2>&1 || true
+    ufw allow 7070/tcp comment 'AnyDesk' >> "$LOG_FILE" 2>&1 || true
+    ufw allow 1194/udp comment 'OpenVPN' >> "$LOG_FILE" 2>&1 || true
+    ufw allow 51820/udp comment 'WireGuard' >> "$LOG_FILE" 2>&1 || true
+    ufw --force enable >> "$LOG_FILE" 2>&1 || true
+    log_ok "UFW activo"
+
+    # Comando update
+    cat > /usr/local/bin/update <<'UPDATEEOF'
+#!/bin/bash
+USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
+[[ -z "$USER_HOME" ]] && USER_HOME="$HOME"
+LOG_DIR="$USER_HOME/Desktop/Moskov/Apps/Update/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/update-$(date +%Y%m%d-%H%M%S).log"
+{
+    echo "========== [$(date)] INICIO =========="
+    if command -v timeshift &>/dev/null; then
+        sudo timeshift --create --comments "Pre-update" --tags D
+    fi
+    sudo parrot-upgrade -y 2>/dev/null || sudo apt-get upgrade -y
+    echo "========== [$(date)] FIN =========="
+} | tee -a "$LOG_FILE"
+UPDATEEOF
+    chmod +x /usr/local/bin/update
+    log_ok "Comando update"
+
+    systemctl enable lightdm >> "$LOG_FILE" 2>&1 || true
+    log_ok "LightDM habilitado"
+
+    echo ""
+    log_ok "FASE 8 COMPLETADA"
+}
+
+# =============================================================================
+# RESUMEN
+# =============================================================================
+
+resumen() {
+    banner
+    echo -e "  ${G}========================================================${RST}"
+    echo -e "  ${G}       INSTALACION COMPLETADA - Moskov Env v3.0${RST}"
+    echo -e "  ${G}========================================================${RST}\n"
+    [[ $ERRORS -eq 0 ]] && echo -e "    ${G}[+] Sin errores${RST}" || echo -e "    ${Y}[!] $ERRORS advertencia(s)${RST}"
+    echo ""
+    echo -e "    Usuario:   ${C}$REAL_USER${RST}"
+    echo -e "    Home:      ${C}$REAL_HOME${RST}"
+    echo -e "    WM:        bspwm + polybar + picom + rofi"
+    echo -e "    Terminal:  Kitty | Editor: Neovim"
+    echo -e "    Shell:     zsh + P10k + fzf"
+    echo -e "    Login:     LightDM -> BSPWM"
+    echo -e "    Security:  metasploit, nmap, hydra, hashcat, sqlmap, wireshark..."
+    echo -e "    Tools:     i3lock-fancy, impacket, pspy, evil-winrm, wpscan, ngrok"
+    echo -e "    Apps:      $MOSKOV_DIR/Apps/"
+    echo -e "    Scripts:   $CIBER_DIR/1_Scripts/"
+    echo ""
+    echo -e "    ${B}sudo reboot${RST} para iniciar con BSPWM"
+    echo -e "    ${DIM}Log: $LOG_FILE${RST}\n"
+}
+
+# =============================================================================
+# EJECUCION COMPLETA (usada por --auto y opcion 1)
+# =============================================================================
+
+ejecutar_instalacion_completa() {
+    pre_limpieza
+    fase_preflight
+    fase_purga
+    fase_paquetes || log_err "Fase paquetes con errores - continuando"
+    fase_xsession || log_err "Fase xsession con errores - continuando"
+    fase_binarios || log_err "Fase binarios con errores - continuando"
+    fase_herramientas || log_err "Fase herramientas con errores - continuando"
+    # OBLIGATORIAS: siempre se ejecutan
+    fase_despliegue
+    fase_permisos
+    fase_final
+
+    # VALIDACION PRE-REBOOT: Verificar que la sesion va a funcionar
+    banner
+    echo -e "  ${B}VALIDACION PRE-REBOOT${RST}\n"
+    local FAIL=0
+
+    # Verificar binario bspwm
+    if command -v bspwm &>/dev/null; then
+        log_ok "bspwm binario: $(which bspwm)"
+    else
+        log_err "bspwm NO encontrado en PATH"
+        FAIL=1
+    fi
+
+    # Verificar bspwm-session
+    if [[ -x /usr/bin/bspwm-session ]]; then
+        log_ok "/usr/bin/bspwm-session ejecutable"
+    else
+        log_err "/usr/bin/bspwm-session NO existe o no es ejecutable"
+        FAIL=1
+    fi
+
+    # Verificar bspwmrc
+    if [[ -x "$REAL_HOME/.config/bspwm/bspwmrc" ]]; then
+        log_ok "bspwmrc existe y es ejecutable"
+    else
+        log_err "bspwmrc falta o sin permisos"
+        FAIL=1
+    fi
+
+    # Verificar sxhkdrc
+    if [[ -f "$REAL_HOME/.config/sxhkd/sxhkdrc" ]]; then
+        log_ok "sxhkdrc existe"
+    else
+        log_err "sxhkdrc NO existe"
+        FAIL=1
+    fi
+
+    # Verificar .desktop
+    if [[ -f /usr/share/xsessions/bspwm.desktop ]]; then
+        log_ok "bspwm.desktop presente"
+    else
+        log_err "bspwm.desktop NO registrado"
+        FAIL=1
+    fi
+
+    # Verificar propiedad de .config
+    local OWNER=$(stat -c '%U' "$REAL_HOME/.config/bspwm/bspwmrc" 2>/dev/null)
+    if [[ "$OWNER" == "$REAL_USER" ]]; then
+        log_ok "Propiedad correcta: $REAL_USER"
+    else
+        log_err "Propiedad incorrecta: $OWNER (deberia ser $REAL_USER)"
+        chown -R "$REAL_USER:$REAL_USER" "$REAL_HOME"
+        log_warn "chown aplicado de emergencia"
+    fi
+
+    # Verificar LightDM config
+    if grep -q "user-session=bspwm" /etc/lightdm/lightdm.conf 2>/dev/null; then
+        log_ok "LightDM apunta a sesion bspwm"
+    else
+        log_err "LightDM NO configurado para bspwm"
+    fi
+
+    echo ""
+    if [[ $FAIL -eq 0 ]]; then
+        log_ok "VALIDACION EXITOSA - Listo para reboot"
+    else
+        log_warn "Validacion con advertencias - revisar log"
+    fi
+
+    resumen
+}
+
+# =============================================================================
+# MODO --auto: EJECUCION 100% DESATENDIDA
+# =============================================================================
+
+if [[ $AUTO_MODE -eq 1 ]]; then
+    banner
+    echo -e "  ${G}[AUTO] Instalacion COMPLETA desatendida iniciada${RST}\n"
+    echo -e "  ${DIM}Usuario: $REAL_USER | Home: $REAL_HOME${RST}"
+    echo -e "  ${DIM}GUI activa: $( [[ $GUI_ACTIVE -eq 1 ]] && echo 'SI (modo seguro)' || echo 'NO (TTY completo)' )${RST}\n"
+    ejecutar_instalacion_completa
+    echo ""
+    echo -e "  ${G}[AUTO] Reiniciando en 5 segundos...${RST}"
+    echo -e "  ${DIM}(Ctrl+C para cancelar reboot)${RST}"
+    sleep 5
+    reboot
+fi
+
+# =============================================================================
+# MODOS INTERACTIVOS
+# =============================================================================
+
+instalacion_limpia() {
+    echo -e "\n    ${R}[!] MODO DESTRUCTIVO: Eliminara entorno previo e instalara TODO.${RST}"
+    [[ $GUI_ACTIVE -eq 1 ]] && echo -e "    ${Y}[~] GUI detectada: Xorg/LightDM no se reinstalaran${RST}"
+    echo ""
+    read -rp "    Confirmar? (s/n): " c
+    [[ "$c" != "s" && "$c" != "S" ]] && return
+    ejecutar_instalacion_completa
+}
+
+reinstalar_configs() {
+    echo -e "\n    ${Y}[!] Sobrescribira dotfiles y configs.${RST}\n"
+    read -rp "    Continuar? (s/n): " c
+    [[ "$c" != "s" && "$c" != "S" ]] && return
+    fase_despliegue
+    fase_permisos
+    resumen
+}
+
+actualizar_scripts() {
+    banner
+    echo -e "  ${B}Actualizar Scripts${RST}\n"
+    local SRC=""
+    [[ -d "$REPO_DIR/scripts_estudio/1_Scripts/servicios" ]] && SRC="$REPO_DIR/scripts_estudio/1_Scripts/servicios"
+    [[ -z "$SRC" && -d "$REPO_DIR/1_Scripts/servicios" ]] && SRC="$REPO_DIR/1_Scripts/servicios"
+    local DST="$CIBER_DIR/1_Scripts/servicios"
+    mkdir -p "$DST"
+    if [[ -n "$SRC" ]]; then
+        cp -rf "$SRC/." "$DST/" 2>/dev/null
+        find "$DST" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+        find "$DST" -name "*.py" -exec chmod +x {} \; 2>/dev/null || true
+        chown -R "$REAL_USER:$REAL_USER" "$DST"
+        log_ok "Scripts actualizados"
+        ls "$DST/" 2>/dev/null | sed 's/^/      /'
+    else
+        log_err "Fuente no encontrada"
+    fi
+    echo ""
+    read -rp "    ENTER para volver..." _
+}
+
+# =============================================================================
+# MENU PRINCIPAL
+# =============================================================================
+
+while true; do
+    banner
+    echo -e "  ${DIM}Usuario: $REAL_USER | Home: $REAL_HOME | Repo: $REPO_DIR${RST}"
+    [[ $GUI_ACTIVE -eq 1 ]] && echo -e "  ${Y}[~] Sesion grafica ACTIVA (modo GUI-safe)${RST}" || echo -e "  ${G}[+] Modo TTY/CLI${RST}"
+    echo ""
+    echo -e "  ${G}1)${RST} Instalacion COMPLETA desde 0"
+    echo -e "  ${G}2)${RST} Reinstalar / Restaurar Configs"
+    echo -e "  ${G}3)${RST} Actualizar Scripts"
+    echo -e "  ${G}0)${RST} Salir"
+    echo ""
+    read -rp "  Opcion: " opt
+    case $opt in
+        1) instalacion_limpia ;;
+        2) reinstalar_configs ;;
+        3) actualizar_scripts ;;
+        0) echo -e "\n    ${G}Hasta luego!${RST}\n"; exit 0 ;;
+        *) echo -e "    ${R}[!] Invalido${RST}"; sleep 1 ;;
+    esac
+done

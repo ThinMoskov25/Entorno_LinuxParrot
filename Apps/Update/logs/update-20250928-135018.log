@@ -1,0 +1,55 @@
+========== [dom 28 sep 2025 13:50:18 -05] INICIO UPDATE ==========
+[+] Ejecutando regla update en ParrotOS...
+[+] Creando snapshot con Timeshift antes de actualizar...
+Using system disk as snapshot device for creating snapshots in BTRFS mode
+Mounted '/dev/nvme0n1p3' at '/run/timeshift/87546/backup'
+btrfs: Quotas are not enabled
+Creating new backup...(BTRFS)
+Saving to device: /dev/nvme0n1p3, mounted at path: /run/timeshift/87546/backup
+Created directory: /run/timeshift/87546/backup/timeshift-btrfs/snapshots/2025-09-28_13-50-19
+Created subvolume snapshot: /run/timeshift/87546/backup/timeshift-btrfs/snapshots/2025-09-28_13-50-19/@
+Created subvolume snapshot: /run/timeshift/87546/backup/timeshift-btrfs/snapshots/2025-09-28_13-50-19/@home
+Created control file: /run/timeshift/87546/backup/timeshift-btrfs/snapshots/2025-09-28_13-50-19/info.json
+BTRFS Snapshot saved successfully (0s)
+Tagged snapshot '2025-09-28_13-50-19': ondemand
+------------------------------------------------------------------------------
+Maximum backups exceeded for backup level 'daily'
+Snapshot '2025-05-12_00-00-01' un-tagged 'daily'
+Removing snapshots (un-tagged):
+------------------------------------------------------------------------------
+Removing snapshot: 2025-05-12_00-00-01
+Deleting subvolume: @home (Id:277)
+Deleted subvolume: @home (Id:277)
+
+Deleting subvolume: @ (Id:276)
+Deleted subvolume: @ (Id:276)
+
+Deleted directory: /run/timeshift/87546/backup/timeshift-btrfs/snapshots/2025-05-12_00-00-01
+Removed snapshot: 2025-05-12_00-00-01
+------------------------------------------------------------------------------
+[+] Iniciando actualización con parrot-upgrade...
+Obj:1 http://deb.anydesk.com all InRelease
+Des:3 http://archive.ubuntu.com/ubuntu focal InRelease [265 kB]
+Obj:4 https://ngrok-agent.s3.amazonaws.com bookworm InRelease
+Des:2 https://downloads.metasploit.com/data/releases/metasploit-framework/apt lucid InRelease [3.956 B]
+Err:2 https://downloads.metasploit.com/data/releases/metasploit-framework/apt lucid InRelease
+  Las firmas siguientes no se pudieron verificar porque su clave pública no está disponible: NO_PUBKEY C048F0B49DEEC457
+Err:3 http://archive.ubuntu.com/ubuntu focal InRelease
+  Las firmas siguientes no se pudieron verificar porque su clave pública no está disponible: NO_PUBKEY 3B4FE6ACC0B21F32 NO_PUBKEY 871920D1991BC93C
+Leyendo lista de paquetes...
+failed to update index lists
+Leyendo lista de paquetes...
+Creando árbol de dependencias...
+Leyendo la información de estado...
+0 actualizados, 0 nuevos se instalarán, 0 para eliminar y 0 no actualizados.
+Leyendo lista de paquetes...
+Creando árbol de dependencias...
+Leyendo la información de estado...
+Calculando la actualización...
+0 actualizados, 0 nuevos se instalarán, 0 para eliminar y 0 no actualizados.
+Leyendo lista de paquetes...
+Creando árbol de dependencias...
+Leyendo la información de estado...
+Calculando la actualización...
+0 actualizados, 0 nuevos se instalarán, 0 para eliminar y 0 no actualizados.
+========== [dom 28 sep 2025 13:50:23 -05] FIN UPDATE ==========

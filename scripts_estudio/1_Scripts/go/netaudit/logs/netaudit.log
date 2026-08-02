@@ -1,0 +1,22 @@
+[2026-07-20 14:21:10] [INFO] ═══ NetAudit iniciado ═══
+[2026-07-20 14:21:10] [INFO] Directorio de resultados: /home/moskov/netaudit/results
+[2026-07-20 14:21:24] [ACCIÓN] Opción seleccionada del menú: 6
+[2026-07-20 14:21:24] [ACCIÓN] Iniciando auditoría completa
+[2026-07-20 14:21:47] [INFO] Auditoría completa iniciada para target: 192.168.0.211
+[2026-07-20 14:21:47] [INFO] Fase 1: Descubrimiento de hosts
+[2026-07-20 14:21:47] [INFO] Fase 1 completada: 254 hosts descubiertos
+[2026-07-20 14:21:47] [INFO] Fase 2: Escaneo de puertos en 192.168.0.211
+[2026-07-20 14:21:47] [INFO] Fase 2 completada: 3 puertos abiertos
+[2026-07-20 14:21:47] [INFO] Fase 3: Análisis de banners
+[2026-07-20 14:21:47] [INFO] Fase 4: Detección de sockets locales
+[2026-07-20 14:21:47] [INFO] Fase 4 completada: 14 sockets en escucha
+[2026-07-20 14:21:47] [INFO] Auditoría completa finalizada para 192.168.0.211
+[2026-07-20 14:21:56] [ACCIÓN] Opción seleccionada del menú: 7
+[2026-07-20 14:21:56] [ACCIÓN] Iniciando exportación de reporte
+[2026-07-20 14:22:02] [INFO] Reporte exportado exitosamente: /home/moskov/netaudit/results/PRUEBA
+[2026-07-20 14:22:04] [ACCIÓN] Opción seleccionada del menú: 0
+[2026-07-20 14:22:04] [INFO] Usuario salió de la aplicación
+[2026-07-20 14:26:44] [INFO] ═══ NetAudit iniciado ═══
+[2026-07-20 14:26:44] [INFO] Directorio de resultados: /home/moskov/netaudit/results
+[2026-07-20 14:28:56] [ACCIÓN] Opción seleccionada del menú: 0
+[2026-07-20 14:28:56] [INFO] Usuario salió de la aplicación

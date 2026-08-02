@@ -1,0 +1,112 @@
+========== [sáb 18 jul 2026 20:12:10 -05] INICIO UPDATE ==========
+[+] Ejecutando regla update en ParrotOS...
+[+] Creando snapshot con Timeshift antes de actualizar...
+Using system disk as snapshot device for creating snapshots in BTRFS mode
+Mounted '/dev/nvme0n1p3' at '/run/timeshift/64705/backup'
+btrfs: Quotas are not enabled
+Creating new backup...(BTRFS)
+Saving to device: /dev/nvme0n1p3, mounted at path: /run/timeshift/64705/backup
+Created directory: /run/timeshift/64705/backup/timeshift-btrfs/snapshots/2026-07-18_20-12-10
+Created subvolume snapshot: /run/timeshift/64705/backup/timeshift-btrfs/snapshots/2026-07-18_20-12-10/@
+Created subvolume snapshot: /run/timeshift/64705/backup/timeshift-btrfs/snapshots/2026-07-18_20-12-10/@home
+Created control file: /run/timeshift/64705/backup/timeshift-btrfs/snapshots/2026-07-18_20-12-10/info.json
+BTRFS Snapshot saved successfully (1s)
+Tagged snapshot '2026-07-18_20-12-10': ondemand
+------------------------------------------------------------------------------
+Maximum backups exceeded for backup level 'daily'
+Snapshot '2025-09-28_13-45-16' un-tagged 'daily'
+Removing snapshots (un-tagged):
+------------------------------------------------------------------------------
+Removing snapshot: 2026-02-16_10-00-02
+Deleting subvolume: @home (Id:295)
+Deleted subvolume: @home (Id:295)
+
+Deleting subvolume: @ (Id:294)
+Deleted subvolume: @ (Id:294)
+
+Deleted directory: /run/timeshift/64705/backup/timeshift-btrfs/snapshots/2026-02-16_10-00-02
+Removed snapshot: 2026-02-16_10-00-02
+------------------------------------------------------------------------------
+[+] Iniciando actualización con parrot-upgrade...
+Des:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Des:2 https://dl.google.com/linux/chrome/deb stable InRelease [1.825 B]
+Des:3 http://archive.ubuntu.com/ubuntu focal InRelease [265 kB]
+Des:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8.790 kB]
+Des:5 http://deb.anydesk.com all InRelease [7.386 B]
+Des:7 https://ngrok-agent.s3.amazonaws.com bookworm InRelease [20,3 kB]
+Des:8 https://dl.google.com/linux/chrome/deb stable/main amd64 Packages [1.220 B]
+Des:6 https://downloads.metasploit.com/data/releases/metasploit-framework/apt lucid InRelease [3.956 B]
+Des:9 http://deb.anydesk.com all/main amd64 Packages [613 B]
+Des:10 http://deb.debian.org/debian bookworm/main Translation-en [6.107 kB]
+Des:11 https://ngrok-agent.s3.amazonaws.com bookworm/main amd64 Packages [12,9 kB]
+Err:3 http://archive.ubuntu.com/ubuntu focal InRelease
+  Las firmas siguientes no se pudieron verificar porque su clave pública no está disponible: NO_PUBKEY 3B4FE6ACC0B21F32 NO_PUBKEY 871920D1991BC93C
+Err:6 https://downloads.metasploit.com/data/releases/metasploit-framework/apt lucid InRelease
+  Las firmas siguientes no se pudieron verificar porque su clave pública no está disponible: NO_PUBKEY C048F0B49DEEC457
+Des:12 http://deb.debian.org/debian bookworm/contrib amd64 Packages [53,5 kB]
+Des:13 http://deb.debian.org/debian bookworm/contrib Translation-en [48,4 kB]
+Des:14 http://deb.debian.org/debian bookworm/non-free amd64 Packages [102 kB]
+Des:15 http://deb.debian.org/debian bookworm/non-free Translation-en [68,2 kB]
+Leyendo lista de paquetes...
+failed to update index lists
+Leyendo lista de paquetes...
+Creando árbol de dependencias...
+Leyendo la información de estado...
+Los paquetes indicados a continuación se instalaron de forma automática y ya no son necesarios.
+  libgnutls-dane0 libunbound8 lockfile-progs sendmail-base sendmail-cf
+  sensible-mda
+Utilice «sudo apt autoremove» para eliminarlos.
+0 actualizados, 0 nuevos se instalarán, 0 para eliminar y 3 no actualizados.
+Leyendo lista de paquetes...
+Creando árbol de dependencias...
+Leyendo la información de estado...
+Calculando la actualización...
+Los paquetes indicados a continuación se instalaron de forma automática y ya no son necesarios.
+  libgnutls-dane0 libunbound8 lockfile-progs sendmail-base sendmail-cf
+  sensible-mda
+Utilice «sudo apt autoremove» para eliminarlos.
+Se actualizarán los siguientes paquetes:
+  anydesk google-chrome-stable ngrok
+3 actualizados, 0 nuevos se instalarán, 0 para eliminar y 0 no actualizados.
+Se necesita descargar 158 MB de archivos.
+Se utilizarán 42,5 MB de espacio de disco adicional después de esta operación.
+Des:1 https://dl.google.com/linux/chrome/deb stable/main amd64 google-chrome-stable amd64 150.0.7871.128-1 [134 MB]
+Des:2 http://deb.anydesk.com all/main amd64 anydesk amd64 8.0.4 [16,1 MB]
+Des:3 https://ngrok-agent.s3.amazonaws.com bookworm/main amd64 ngrok amd64 3.39.9 [8.374 kB]
+apt-listchanges: Leyendo lista de cambios...
+Descargados 158 MB en 23s (6.805 kB/s)
+(Leyendo la base de datos ... (Leyendo la base de datos ... 5%(Leyendo la base de datos ... 10%(Leyendo la base de datos ... 15%(Leyendo la base de datos ... 20%(Leyendo la base de datos ... 25%(Leyendo la base de datos ... 30%(Leyendo la base de datos ... 35%(Leyendo la base de datos ... 40%(Leyendo la base de datos ... 45%(Leyendo la base de datos ... 50%(Leyendo la base de datos ... 55%(Leyendo la base de datos ... 60%(Leyendo la base de datos ... 65%(Leyendo la base de datos ... 70%(Leyendo la base de datos ... 75%(Leyendo la base de datos ... 80%(Leyendo la base de datos ... 85%(Leyendo la base de datos ... 90%(Leyendo la base de datos ... 95%(Leyendo la base de datos ... 100%(Leyendo la base de datos ... 594299 ficheros o directorios instalados actualmente.)
+Preparando para desempaquetar .../google-chrome-stable_150.0.7871.128-1_amd64.deb ...
+Desempaquetando google-chrome-stable (150.0.7871.128-1) sobre (140.0.7339.207-1) ...
+Preparando para desempaquetar .../anydesk_8.0.4_amd64.deb ...
+Removed "/etc/systemd/system/multi-user.target.wants/anydesk.service".
+[0;1;31mFailed to stop anydesk.service: Unit anydesk.service not loaded.[0m
+Desempaquetando anydesk (8.0.4) sobre (7.1.0) ...
+Preparando para desempaquetar .../ngrok_3.39.9_amd64.deb ...
+Desempaquetando ngrok (3.39.9) sobre (3.30.0) ...
+Configurando anydesk (8.0.4) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/anydesk.service → /etc/systemd/system/anydesk.service.
+Configurando google-chrome-stable (150.0.7871.128-1) ...
+Configurando ngrok (3.39.9) ...
+Procesando disparadores para mate-menus (1.26.0-3) ...
+Procesando disparadores para man-db (2.11.2-2) ...
+Procesando disparadores para menu (2.1.49) ...
+Procesando disparadores para mailcap (3.70+nmu1) ...
+Procesando disparadores para bamfdaemon (0.5.6+repack-1) ...
+Rebuilding /usr/share/applications/bamf-2.index...
+Procesando disparadores para desktop-file-utils (0.26-1) ...
+Procesando disparadores para hicolor-icon-theme (0.17-2) ...
+Scanning application launchers
+Removing duplicate launchers or broken launchers
+ [-] Missing executable file kcmshell5 at launcher /usr/share/applications/kcm_trash.desktop
+Launchers are updated
+Leyendo lista de paquetes...
+Creando árbol de dependencias...
+Leyendo la información de estado...
+Calculando la actualización...
+Los paquetes indicados a continuación se instalaron de forma automática y ya no son necesarios.
+  libgnutls-dane0 libunbound8 lockfile-progs sendmail-base sendmail-cf
+  sensible-mda
+Utilice «sudo apt autoremove» para eliminarlos.
+0 actualizados, 0 nuevos se instalarán, 0 para eliminar y 0 no actualizados.
+========== [sáb 18 jul 2026 20:13:26 -05] FIN UPDATE ==========
