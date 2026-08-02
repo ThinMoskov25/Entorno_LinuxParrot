@@ -44,6 +44,7 @@ dibujar_menu() {
     echo -e "  ${G}2)${RST} Instalar Apps"
     echo -e "  ${G}3)${RST} Configuracion de Red"
     echo -e "  ${G}4)${RST} Validar Scripts y Funciones"
+    echo -e "  ${G}5)${RST} Snapshot del sistema (Timeshift)"
     echo -e "  ${G}0)${RST} Salir"
     echo ""
 }
@@ -437,7 +438,12 @@ enlazar_scripts() {
             [[ -f "$script" ]] || continue
             chmod +x "$script"
             local name=$(basename "$script" .sh)
-            ln -sf "$script" "$USER_HOME/.local/bin/$name"
+            # Crear wrapper que ejecuta con sudo
+            cat > "$USER_HOME/.local/bin/$name" << WRAPPER
+#!/bin/bash
+sudo bash "$script" "\$@"
+WRAPPER
+            chmod +x "$USER_HOME/.local/bin/$name"
             ((count++))
         done
     fi
@@ -448,7 +454,11 @@ enlazar_scripts() {
             [[ -f "$script" ]] || continue
             chmod +x "$script"
             local name=$(basename "$script" .sh)
-            ln -sf "$script" "$USER_HOME/.local/bin/$name"
+            cat > "$USER_HOME/.local/bin/$name" << WRAPPER
+#!/bin/bash
+sudo bash "$script" "\$@"
+WRAPPER
+            chmod +x "$USER_HOME/.local/bin/$name"
             ((count++))
         done
     fi
@@ -458,13 +468,90 @@ enlazar_scripts() {
         echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$USER_HOME/.zshrc"
     fi
 
-    RESULTADO="  ${G}[+]${RST} $count scripts enlazados en ~/.local/bin/\n  ${DIM}Reinicia terminal o ejecuta: source ~/.zshrc${RST}\n\n  ${B}Ahora puedes usar:${RST}\n"
+    RESULTADO="  ${G}[+]${RST} $count scripts enlazados en ~/.local/bin/\n  ${DIM}Se ejecutan con sudo automaticamente${RST}\n  ${DIM}Reinicia terminal o: source ~/.zshrc${RST}\n\n  ${B}Comandos disponibles:${RST}\n"
     if [[ -d "$SCRIPTS_DIR/servicios" ]]; then
         for script in "$SCRIPTS_DIR/servicios/"*.sh; do
             [[ -f "$script" ]] || continue
             RESULTADO+="    ${G}●${RST} $(basename "$script" .sh)\n"
         done
     fi
+}
+
+# =============================================================================
+# 5. SNAPSHOT DEL SISTEMA (Timeshift)
+# =============================================================================
+menu_snapshot() {
+    while true; do
+        limpiar; dibujar_cabecera
+        echo -e "\n  ${B}── Snapshot del Sistema (Timeshift) ──${RST}\n"
+
+        # Verificar si timeshift está instalado
+        if ! command -v timeshift &>/dev/null; then
+            echo -e "  ${R}[!]${RST} Timeshift no instalado"
+            echo -e "  ${Y}    Instalando...${RST}"
+            sudo apt-get install -y timeshift 2>/dev/null
+            if ! command -v timeshift &>/dev/null; then
+                RESULTADO="  ${R}[!]${RST} No se pudo instalar timeshift"
+                read -rp "  Enter..."; return
+            fi
+        fi
+
+        # Listar snapshots existentes
+        echo -e "  ${B}Snapshots existentes:${RST}\n"
+        local snaps=$(sudo timeshift --list 2>/dev/null | grep -E "^[0-9]" || true)
+        if [[ -n "$snaps" ]]; then
+            echo "$snaps" | while IFS= read -r line; do
+                echo -e "    ${G}●${RST} $line"
+            done
+        else
+            echo -e "    ${DIM}Ninguna${RST}"
+        fi
+
+        echo ""
+        echo -e "  ${G}1)${RST} Crear snapshot ahora"
+        echo -e "  ${G}2)${RST} Listar snapshots"
+        echo -e "  ${G}3)${RST} Restaurar snapshot"
+        echo -e "  ${G}4)${RST} Eliminar snapshot"
+        echo -e "  ${G}0)${RST} Volver"
+        echo ""
+        if [[ -n "$RESULTADO" ]]; then dibujar_resultado; fi
+        read -rp "  Opcion: " opt
+        RESULTADO=""
+
+        case $opt in
+            1)
+                read -rp "  Comentario (opcional): " comment
+                comment="${comment:-Snapshot manual}"
+                echo -e "\n  ${Y}[*]${RST} Creando snapshot..."
+                sudo timeshift --create --comments "$comment" 2>&1 | tail -5
+                RESULTADO="  ${G}[+]${RST} Snapshot creado: $comment"
+                read -rp "  Enter..."
+                ;;
+            2)
+                limpiar; dibujar_cabecera
+                echo -e "\n  ${B}Snapshots:${RST}\n"
+                sudo timeshift --list 2>&1
+                read -rp "  Enter..."
+                ;;
+            3)
+                echo -e "\n  ${R}[!] ATENCION: Restaurar reiniciara el sistema${RST}"
+                read -rp "  Confirmar (si/no): " conf
+                if [[ "$conf" == "si" ]]; then
+                    sudo timeshift --restore
+                fi
+                ;;
+            4)
+                echo -e "\n  Ingresa el numero del snapshot a eliminar:"
+                sudo timeshift --list 2>/dev/null | grep -E "^[0-9]"
+                read -rp "  Numero: " num
+                [[ -n "$num" ]] && sudo timeshift --delete --snapshot "$num" 2>&1
+                RESULTADO="  ${G}[+]${RST} Snapshot eliminado"
+                read -rp "  Enter..."
+                ;;
+            0) return ;;
+            *) RESULTADO="  ${R}Opcion invalida${RST}" ;;
+        esac
+    done
 }
 
 # =============================================================================
@@ -480,6 +567,7 @@ while true; do
         2) menu_apps ;;
         3) menu_red ;;
         4) menu_validar ;;
+        5) menu_snapshot ;;
         0) limpiar; echo -e "  ${G}Bye!${RST}"; exit 0 ;;
         *) RESULTADO="  ${R}Opcion invalida${RST}" ;;
     esac

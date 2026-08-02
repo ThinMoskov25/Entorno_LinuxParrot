@@ -3,7 +3,8 @@
 # Detectar interfaz WiFi dinamicamente
 INTERFACE=""
 for iface in $(ls /sys/class/net/ 2>/dev/null); do
-    if [ -d "/sys/class/net/$iface/wireless" ]; then
+    # Verificar si es wireless (tiene directorio wireless o empieza con wl)
+    if [ -d "/sys/class/net/$iface/wireless" ] || echo "$iface" | grep -qE "^wl"; then
         INTERFACE="$iface"
         break
     fi
@@ -15,7 +16,7 @@ if [ -z "$INTERFACE" ]; then
     exit 0
 fi
 
-# Obtener IP
+# Obtener IP (usar ip, no ifconfig)
 IP=$(ip -4 addr show "$INTERFACE" 2>/dev/null | grep "inet " | awk '{print $2}' | cut -d/ -f1 | head -1)
 
 if [ -z "$IP" ]; then

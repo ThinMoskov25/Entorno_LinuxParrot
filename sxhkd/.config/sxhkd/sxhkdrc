@@ -137,3 +137,12 @@ super + shift + p
 
 super + shift + o
 	/usr/bin/torbrowser-launcher
+
+
+#Screenshot with Print key
+Print
+    flameshot gui
+
+#Screenshot super + p
+super + p
+    flameshot gui
