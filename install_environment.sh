@@ -373,6 +373,7 @@ fase_xsession() {
 # 1. Garantizar HOME (LightDM a veces no la exporta)
 export HOME="\${HOME:-\$(getent passwd \$(id -un) | cut -d: -f6)}"
 export XDG_CURRENT_DESKTOP="bspwm"
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 export XDG_CONFIG_HOME="\$HOME/.config"
 
 # 2. Log de depuracion
@@ -396,7 +397,7 @@ chmod +x "\$BSPWMRC"
 # 4. Lanzar sxhkd
 SXHKDRC="\$HOME/.config/sxhkd/sxhkdrc"
 if [ -f "\$SXHKDRC" ]; then
-    sxhkd -c "\$SXHKDRC" >> "\$LOGF" 2>&1 &
+    /usr/local/bin/sxhkd -c "\$SXHKDRC" >> "\$LOGF" 2>&1 &
     echo "sxhkd PID=\$!" >> "\$LOGF"
 else
     echo "WARN: sxhkdrc no encontrado" >> "\$LOGF"
@@ -404,7 +405,7 @@ fi
 
 # 5. Ejecutar bspwm (DEBE ser exec para mantener la sesion viva)
 echo "Launching: bspwm -c \$BSPWMRC" >> "\$LOGF"
-exec bspwm -c "\$BSPWMRC"
+exec /usr/local/bin/bspwm -c "\$BSPWMRC"
 BSEOF
     chmod 755 /usr/bin/bspwm-session
     log_ok "bspwm-session creado"
