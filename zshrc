@@ -30,10 +30,16 @@ fi
 
 # Custom Aliases
 # -----------------------------------------------
-# bat
-alias cat='bat'
-alias catn='bat --style=plain'
-alias catnp='bat --style=plain --paging=never'
+# bat (compatible con Debian batcat y Parrot bat)
+if command -v bat &>/dev/null; then
+    alias cat='bat'
+    alias catn='bat --style=plain'
+    alias catnp='bat --style=plain --paging=never'
+elif command -v batcat &>/dev/null; then
+    alias cat='batcat'
+    alias catn='batcat --style=plain'
+    alias catnp='batcat --style=plain --paging=never'
+fi
  
 # ls
 alias ll='lsd -lh --group-dirs=first'
@@ -173,13 +179,13 @@ extractPorts () {
 
 #Ingresar directorio
 
-alias cdm='cd $CIBER_BASE'
+alias cdm='cd $HOME/Desktop/$(whoami)/Ciberseguridad'
 
 # Servicios de red (aplicativos interactivos)
-alias startftp='bash $CIBER_BASE/1_Scripts/servicios/startftp.sh'
-alias startssh='bash $CIBER_BASE/1_Scripts/servicios/startssh.sh'
-alias startfire='bash $CIBER_BASE/1_Scripts/servicios/startfire.sh'
-alias compartidos='sudo bash $CIBER_BASE/1_Scripts/servicios/gestionar_compartidos.sh'
+alias startftp='bash $HOME/Desktop/$(whoami)/Ciberseguridad/1_Scripts/servicios/startftp.sh'
+alias startssh='bash $HOME/Desktop/$(whoami)/Ciberseguridad/1_Scripts/servicios/startssh.sh'
+alias startfire='sudo bash $HOME/Desktop/$(whoami)/Ciberseguridad/1_Scripts/servicios/startfire.sh'
+alias compartidos='sudo bash $HOME/Desktop/$(whoami)/Ciberseguridad/1_Scripts/servicios/gestionar_compartidos.sh'
 
 # Info Batería + Fecha/Hora (verde en terminal)
 
@@ -206,7 +212,7 @@ infbat() {
 # NetAudit - Herramienta de auditoría de red
 # Modo interactivo (menú)
 netaudit() {
-    sudo "$CIBER_BASE/1_Scripts/go/netaudit/netaudit" "$@"
+    sudo "$HOME/Desktop/$(whoami)/Ciberseguridad/1_Scripts/go/netaudit/netaudit" "$@"
 }
 
 # NetAudit - Modo comando directo
@@ -215,10 +221,10 @@ netscan() {
     shift 2>/dev/null
     case "$cmd" in
         discover|scan|banner|sockets|firewall|audit)
-            sudo "$CIBER_BASE/1_Scripts/go/netaudit/netaudit" "$cmd" "$@"
+            sudo "$HOME/Desktop/$(whoami)/Ciberseguridad/1_Scripts/go/netaudit/netaudit" "$cmd" "$@"
             ;;
         help|-h|--help|"")
-            "$CIBER_BASE/1_Scripts/go/netaudit/netaudit" help
+            "$HOME/Desktop/$(whoami)/Ciberseguridad/1_Scripts/go/netaudit/netaudit" help
             ;;
         *)
             echo "[!] Comando desconocido: $cmd"

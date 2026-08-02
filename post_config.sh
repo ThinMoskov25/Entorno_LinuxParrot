@@ -44,6 +44,7 @@ dibujar_menu() {
     echo -e "  ${G}2)${RST} Instalar Apps"
     echo -e "  ${G}3)${RST} Configuracion de Red"
     echo -e "  ${G}4)${RST} Validar Scripts y Funciones"
+    echo -e "  ${G}5)${RST} Ver funciones y comandos disponibles"
     echo -e "  ${G}0)${RST} Salir"
     echo ""
 }
@@ -554,6 +555,59 @@ menu_snapshot() {
 }
 
 # =============================================================================
+# 5. VER FUNCIONES Y COMANDOS DISPONIBLES
+# =============================================================================
+menu_ver_funciones() {
+    limpiar; dibujar_cabecera
+    echo -e "\n  ${B}── Funciones y Comandos Disponibles ──${RST}\n"
+    echo -e "  ${C}═══ FUNCIONES ZSH (definidas en ~/.zshrc) ═══${RST}\n"
+    echo -e "  ${G}refresh${RST}              Recargar .zshrc sin cerrar terminal"
+    echo -e "  ${G}settarget${RST} IP NOMBRE  Establecer target para polybar"
+    echo -e "  ${G}cleartarget${RST}          Limpiar target"
+    echo -e "  ${G}wificonect${RST}           Menu WiFi interactivo (Python)"
+    echo -e "  ${G}wifiscan${RST}             Modo monitor TL-WN722N"
+    echo -e "  ${G}resnet${RST}               Restaurar servicios de red"
+    echo -e "  ${G}mkt${RST}                  Crear dirs pentesting (nmap/content/scripts/vpn)"
+    echo -e "  ${G}whichsystem${RST} IP       Detectar SO por TTL"
+    echo -e "  ${G}extractPorts${RST} FILE    Extraer puertos de nmap grepable"
+    echo -e "  ${G}infbat${RST}               Fecha/hora + bateria"
+    echo -e "  ${G}netaudit${RST}             Auditoria de red (modo menu)"
+    echo -e "  ${G}netscan${RST} CMD          Auditoria de red (modo directo)"
+    echo ""
+    echo -e "  ${C}═══ ALIASES DE SERVICIOS ═══${RST}\n"
+    echo -e "  ${G}startftp${RST}             Gestor FTP (pyftpdlib)"
+    echo -e "  ${G}startssh${RST}             Gestor SSH (conexiones/perfiles/llaves)"
+    echo -e "  ${G}startfire${RST}            Gestor Firewall UFW (requiere sudo)"
+    echo -e "  ${G}compartidos${RST}          Gestor Samba (requiere sudo)"
+    echo -e "  ${G}cdm${RST}                  Ir a ~/Desktop/usuario/Ciberseguridad"
+    echo -e "  ${G}update${RST}               Actualizar sistema + snapshot timeshift"
+    echo ""
+    echo -e "  ${C}═══ ALIASES UTILES ═══${RST}\n"
+    echo -e "  ${G}cat${RST}                  bat (sintaxis resaltada)"
+    echo -e "  ${G}ls/ll/la/lla${RST}         lsd (mejorado)"
+    echo ""
+    echo -e "  ${C}═══ ATAJOS DE TECLADO (sxhkd) ═══${RST}\n"
+    echo -e "  ${G}Super+Return${RST}         Kitty"
+    echo -e "  ${G}Super+d${RST}              Rofi"
+    echo -e "  ${G}Super+Shift+f${RST}        Firefox"
+    echo -e "  ${G}Super+Shift+g${RST}        Chrome"
+    echo -e "  ${G}Super+Shift+p${RST}        Screenshot (flameshot)"
+    echo -e "  ${G}Super+Shift+x${RST}        Lock (i3lock-fancy)"
+    echo -e "  ${G}Super+q${RST}              Cerrar ventana"
+    echo -e "  ${G}Super+{1-0}${RST}          Escritorios 1-10"
+    echo -e "  ${G}Super+Alt+q${RST}          Salir bspwm"
+    echo -e "  ${G}Super+Alt+r${RST}          Reiniciar bspwm"
+    echo ""
+    echo -e "  ${C}═══ SCRIPTS POLYBAR ═══${RST}\n"
+    echo -e "  ${G}ethernet.sh${RST}          IP ethernet en polybar"
+    echo -e "  ${G}wifi.sh${RST}              IP wifi en polybar"
+    echo -e "  ${G}vpn.sh${RST}               IP VPN (tun0) en polybar"
+    echo -e "  ${G}target.sh${RST}            Target actual en polybar"
+    echo ""
+    read -rp "  Enter para volver..."
+}
+
+# =============================================================================
 # BUCLE PRINCIPAL
 # =============================================================================
 RESULTADO=""
@@ -566,6 +620,7 @@ while true; do
         2) menu_apps ;;
         3) menu_red ;;
         4) menu_validar ;;
+        5) menu_ver_funciones ;;
         0) limpiar; echo -e "  ${G}Bye!${RST}"; exit 0 ;;
         *) RESULTADO="  ${R}Opcion invalida${RST}" ;;
     esac

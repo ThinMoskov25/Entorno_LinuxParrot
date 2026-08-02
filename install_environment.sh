@@ -688,7 +688,9 @@ fase_despliegue() {
     fi
 
     # Dotfiles
-    [[ -f "$REPO_DIR/zshrc" ]] && cp -f "$REPO_DIR/zshrc" "$REAL_HOME/.zshrc" && log_ok ".zshrc"
+    [[ -f "$REPO_DIR/zshrc" ]] && cp -f "$REPO_DIR/zshrc" "$REAL_HOME/.zshrc" && \
+        sed -i "s|\$(whoami)|$REAL_USER|g" "$REAL_HOME/.zshrc" && \
+        log_ok ".zshrc (rutas expandidas para $REAL_USER)"
     [[ -f "$REPO_DIR/zsh/.p10k.zsh" ]] && cp -f "$REPO_DIR/zsh/.p10k.zsh" "$REAL_HOME/.p10k.zsh" && log_ok ".p10k.zsh"
 
     # Desplegar script de post-configuración en el escritorio
