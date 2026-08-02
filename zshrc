@@ -179,7 +179,7 @@ alias cdm='cd $CIBER_BASE'
 alias startftp='bash $CIBER_BASE/1_Scripts/servicios/startftp.sh'
 alias startssh='bash $CIBER_BASE/1_Scripts/servicios/startssh.sh'
 alias startfire='bash $CIBER_BASE/1_Scripts/servicios/startfire.sh'
-alias compartidos="sudo bash \$CIBER_BASE/1_Scripts/servicios/gestionar_compartidos.sh"
+alias compartidos='sudo bash $CIBER_BASE/1_Scripts/servicios/gestionar_compartidos.sh'
 
 # Info Batería + Fecha/Hora (verde en terminal)
 
