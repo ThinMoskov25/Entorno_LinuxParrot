@@ -20,10 +20,12 @@ set -uo pipefail
 # MODULE 0: ELEVACION, ARGUMENTOS Y EXPORTS
 # =============================================================================
 
-# Detectar flag --auto ANTES de la elevacion
+# Detectar flag --auto y --user ANTES de la elevacion
 AUTO_MODE=0
+FORCED_USER=""
 for arg in "$@"; do
     [[ "$arg" == "--auto" ]] && AUTO_MODE=1
+    [[ "$arg" == --user=* ]] && FORCED_USER="${arg#--user=}"
 done
 
 if [[ "$(id -u)" -ne 0 ]]; then
@@ -42,13 +44,21 @@ export UCF_FORCE_CONFFOLD=YES
 
 detect_real_user() {
     local candidate=""
-    candidate="${SUDO_USER:-}"
+    # Prioridad 0: usuario forzado por parametro --user=nombre
+    [[ -n "${FORCED_USER:-}" ]] && candidate="$FORCED_USER"
+    # Prioridad 1: SUDO_USER (la fuente mas confiable cuando se usa sudo)
+    [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="${SUDO_USER:-}"
+    # Prioridad 2: logname (detecta usuario de sesion de login)
     [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="$(logname 2>/dev/null || true)"
-    [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="$(who | awk 'NR==1{print $1}')"
-    [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="$(getent passwd 1000 | cut -d: -f1 2>/dev/null || true)"
+    # Prioridad 3: who (usuario logueado en TTY)
+    [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="$(who | grep -v root | awk 'NR==1{print $1}')"
+    # Prioridad 4: propietario del directorio del script (quien hizo git clone)
+    [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="$(stat -c '%U' "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null || true)"
+    # Prioridad 5: primer usuario no-root con UID >= 1000
+    [[ -z "$candidate" || "$candidate" == "root" ]] && candidate="$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1; exit}' /etc/passwd)"
     if [[ -z "$candidate" || "$candidate" == "root" ]]; then
         echo "ERROR CRITICO: No se detecto usuario real (no root)."
-        echo "Ejecuta: sudo -u TU_USUARIO bash $0"
+        echo "Ejecuta: sudo bash $0 --user=TU_USUARIO"
         exit 1
     fi
     echo "$candidate"
@@ -61,6 +71,15 @@ if [[ -z "$REAL_HOME" || ! -d "$REAL_HOME" ]]; then
     echo "ERROR: HOME no encontrado para '$REAL_USER' ($REAL_HOME)"
     exit 1
 fi
+
+# Confirmacion visible de usuario detectado
+echo ""
+echo "=============================================="
+echo "  USUARIO DETECTADO: $REAL_USER"
+echo "  HOME:              $REAL_HOME"
+echo "  Metodo:            SUDO_USER=${SUDO_USER:-vacio} | logname=$(logname 2>/dev/null || echo N/A)"
+echo "=============================================="
+echo ""
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MOSKOV_DIR="$REAL_HOME/Desktop/Moskov"
@@ -777,7 +796,8 @@ resumen() {
     echo -e "    Scripts:   $CIBER_DIR/1_Scripts/"
     echo ""
     echo -e "    ${B}sudo reboot${RST} para iniciar con BSPWM"
-    echo -e "    ${DIM}Log: $LOG_FILE${RST}\n"
+    echo -e "    ${DIM}Log instalacion: $LOG_FILE${RST}"
+    echo -e "    ${DIM}Log bspwm-session: $REAL_HOME/install_logs/bspwm-session.log${RST}\n"
 }
 
 # =============================================================================
