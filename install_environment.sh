@@ -254,7 +254,7 @@ fase_paquetes() {
         # --- ENTORNO DE ESCRITORIO ---
         local PKGS_DESKTOP=(
             bspwm sxhkd polybar picom rofi
-            feh maim xclip xdotool xdo wmname i3lock neofetch x11-xserver-utils
+            feh maim xclip xdotool xdo wmname i3lock x11-xserver-utils
             flameshot imagemagick xterm gnome-terminal
         )
 
@@ -317,7 +317,15 @@ fase_paquetes() {
         fi
 
         log_proc "Instalando entorno de escritorio..."
-        apt-get install -y "${APT_FLAGS[@]}" "${PKGS_DESKTOP[@]}" >> "$LOG_FILE" 2>&1 || true
+        apt-get install -y "${APT_FLAGS[@]}" "${PKGS_DESKTOP[@]}" >> "$LOG_FILE" 2>&1 || {
+            log_warn "Instalacion grupal fallo - instalando paquetes uno a uno..."
+            for pkg in "${PKGS_DESKTOP[@]}"; do
+                apt-get install -y "${APT_FLAGS[@]}" "$pkg" >> "$LOG_FILE" 2>&1 || log_warn "Paquete no disponible: $pkg"
+            done
+        }
+        # neofetch removido de Parrot/Debian 13, usar fastfetch como reemplazo
+        apt-get install -y "${APT_FLAGS[@]}" fastfetch >> "$LOG_FILE" 2>&1 || \
+            apt-get install -y "${APT_FLAGS[@]}" neofetch >> "$LOG_FILE" 2>&1 || true
 
         log_proc "Instalando shell y terminal..."
         apt-get install -y "${APT_FLAGS[@]}" "${PKGS_SHELL[@]}" >> "$LOG_FILE" 2>&1 || true
