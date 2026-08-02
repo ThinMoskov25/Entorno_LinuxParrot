@@ -82,7 +82,7 @@ echo "=============================================="
 echo ""
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MOSKOV_DIR="$REAL_HOME/Desktop/Moskov"
+MOSKOV_DIR="$REAL_HOME/Desktop/$REAL_USER"
 CIBER_DIR="$MOSKOV_DIR/Ciberseguridad"
 LOG_DIR="$REAL_HOME/install_logs"
 mkdir -p "$LOG_DIR"
@@ -436,6 +436,22 @@ user-session=bspwm
 greeter-session=lightdm-gtk-greeter
 EOF
     log_ok "LightDM configurado: user-session=bspwm"
+    # --- Configurar greeter para que no sea pantalla blanca ---
+    cat > /etc/lightdm/lightdm-gtk-greeter.conf <<GREETEREOF
+[greeter]
+theme-name = Adwaita-dark
+icon-theme-name = Adwaita
+font-name = Sans 11
+background = /usr/share/backgrounds/default.png
+user-background = true
+default-user-image = /usr/share/icons/Adwaita/256x256/status/avatar-default-symbolic.svg
+hide-user-image = false
+GREETEREOF
+    # Intentar usar wallpaper propio si existe
+    if [[ -f "$MOSKOV_DIR/Fondo_Pantalla/fondo.jpeg" ]]; then
+        sed -i "s|background = .*|background = $MOSKOV_DIR/Fondo_Pantalla/fondo.jpeg|" /etc/lightdm/lightdm-gtk-greeter.conf
+    fi
+    log_ok "Greeter GTK configurado (tema oscuro)"
 
     # --- .xsession como fallback absoluto ---
     cat > "$REAL_HOME/.xsession" <<'XEOF'
@@ -752,7 +768,7 @@ fase_final() {
 #!/bin/bash
 USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
 [[ -z "$USER_HOME" ]] && USER_HOME="$HOME"
-LOG_DIR="$USER_HOME/Desktop/Moskov/Apps/Update/logs"
+LOG_DIR="$USER_HOME/Desktop/$REAL_USER/Apps/Update/logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/update-$(date +%Y%m%d-%H%M%S).log"
 {
