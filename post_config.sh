@@ -44,7 +44,6 @@ dibujar_menu() {
     echo -e "  ${G}2)${RST} Instalar Apps"
     echo -e "  ${G}3)${RST} Configuracion de Red"
     echo -e "  ${G}4)${RST} Validar Scripts y Funciones"
-    echo -e "  ${G}5)${RST} Snapshot del sistema (Timeshift)"
     echo -e "  ${G}0)${RST} Salir"
     echo ""
 }
@@ -567,7 +566,6 @@ while true; do
         2) menu_apps ;;
         3) menu_red ;;
         4) menu_validar ;;
-        5) menu_snapshot ;;
         0) limpiar; echo -e "  ${G}Bye!${RST}"; exit 0 ;;
         *) RESULTADO="  ${R}Opcion invalida${RST}" ;;
     esac
