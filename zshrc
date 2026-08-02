@@ -74,7 +74,7 @@ export LS_COLORS="rs=0:di=34:ln=36:mh=00:pi=40;33:so=35:do=35:bd=40;33;01:cd=40;
 
 # PATH dinámico: agrega todos los bin/ dentro de /opt/ automáticamente
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/usr/sbin"
-for dir in /opt/*/bin /opt/*/*/bin; do
+for dir in /opt/*/bin /opt/*/*/bin(N); do
     [[ -d "$dir" ]] && export PATH="$dir:$PATH"
 done
 
