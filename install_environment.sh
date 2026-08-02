@@ -466,7 +466,71 @@ color7 #BAC2DE
 color15 #A6ADC8
 EOF
 
-    log_ok "Dotfiles desplegados correctamente"
+    # ─── Session Launcher: /usr/bin/bspwm-session ───────────────────────
+    # Este archivo es ejecutado por LightDM al iniciar sesión BSPWM
+    # Se despliega con rutas correctas para evitar "sxhkd: not found"
+    log_info "Desplegando /usr/bin/bspwm-session (session launcher)..."
+    cat > /usr/bin/bspwm-session << 'EOF'
+#!/bin/sh
+# Moskov Environment - BSPWM Session Launcher
+# Ejecutado por LightDM al iniciar sesion
+
+# 1. Garantizar HOME y PATH completo (incluye /usr/local/bin)
+export HOME="${HOME:-$(getent passwd $(id -un) | cut -d: -f6)}"
+export XDG_CURRENT_DESKTOP="bspwm"
+export XDG_CONFIG_HOME="$HOME/.config"
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+
+# 2. Log de depuracion
+mkdir -p "$HOME/install_logs"
+LOGF="$HOME/install_logs/bspwm-session.log"
+echo "=== [$(date)] SESSION START ===" >> "$LOGF"
+echo "USER=$(id -un) HOME=$HOME" >> "$LOGF"
+echo "PATH=$PATH" >> "$LOGF"
+
+# 3. Verificar que bspwmrc existe y es ejecutable
+BSPWMRC="$HOME/.config/bspwm/bspwmrc"
+if [ ! -f "$BSPWMRC" ]; then
+    echo "ERROR: $BSPWMRC no existe" >> "$LOGF"
+    mkdir -p "$HOME/.config/bspwm"
+    echo '#!/bin/sh' > "$BSPWMRC"
+    echo 'bspc monitor -d I II III IV V' >> "$BSPWMRC"
+fi
+chmod +x "$BSPWMRC"
+
+# 4. Lanzar sxhkd con ruta absoluta y config correcta
+SXHKDRC="$HOME/.config/sxhkd/sxhkdrc"
+if [ -f "$SXHKDRC" ]; then
+    /usr/local/bin/sxhkd -c "$SXHKDRC" >> "$LOGF" 2>&1 &
+    echo "sxhkd PID=$!" >> "$LOGF"
+else
+    echo "WARN: sxhkdrc no encontrado en $SXHKDRC" >> "$LOGF"
+    # Lanzar sxhkd sin config explícita (usará default)
+    /usr/local/bin/sxhkd >> "$LOGF" 2>&1 &
+    echo "sxhkd (sin config) PID=$!" >> "$LOGF"
+fi
+
+# 5. Ejecutar bspwm (exec mantiene la sesion viva para LightDM)
+echo "Launching: bspwm -c $BSPWMRC" >> "$LOGF"
+exec /usr/local/bin/bspwm -c "$BSPWMRC"
+EOF
+    chmod +x /usr/bin/bspwm-session
+    log_ok "bspwm-session desplegado en /usr/bin/"
+
+    # ─── Xsession .desktop para LightDM ─────────────────────────────────
+    log_info "Desplegando bspwm.desktop para LightDM..."
+    mkdir -p /usr/share/xsessions
+    cat > /usr/share/xsessions/bspwm.desktop << 'EOF'
+[Desktop Entry]
+Name=bspwm (Moskov)
+Comment=Binary space partitioning window manager - Moskov Environment
+Exec=/usr/bin/bspwm-session
+Type=Application
+Keywords=tiling;wm;windowmanager;window;manager;
+EOF
+    log_ok "bspwm.desktop desplegado en /usr/share/xsessions/"
+
+    log_ok "Dotfiles y session launcher desplegados correctamente"
 }
 
 ##############################################################################
