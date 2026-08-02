@@ -1,130 +1,205 @@
-# Guia de Instalacion
-
-Script 100% portatil y dinamico. Compatible con cualquier usuario del sistema.
+# Guia de Instalacion - Moskov Environment v3.0
 
 ---
 
 ## Requisitos
 
-- Parrot Security 6.x o Debian 12+ (cualquier instalacion)
-- Conexion a internet
-- Git: `apt install git`
+- **SO:** Parrot Security OS 6.x / Debian 12+
+- **Arquitectura:** x86_64
+- **RAM:** 2 GB minimo (4 GB recomendado)
+- **Disco:** 15 GB libres
+- **Red:** Conexion a internet activa
+- **Modo:** Puede ejecutarse desde TTY o sesion grafica
 
 ---
 
-## Instalacion (un solo comando)
+## Instalacion Rapida (1 comando)
 
 ```bash
-git clone https://github.com/ThinMoskov25/Entorno_LinuxParrot.git ~/dotfiles
-cd ~/dotfiles
-sudo bash install_environment.sh
+sudo parrot-upgrade && sudo apt install -y git && \
+git clone https://github.com/ThinMoskov25/Entorno_LinuxParrot.git /tmp/entorno && \
+sudo bash /tmp/entorno/install_environment.sh --auto
 ```
 
-El script:
-- Detecta automaticamente el usuario que ejecuto sudo (sin hardcoding)
-- Funciona para cualquier nombre de usuario (moskov, admin, user1, etc.)
-- Solicita contrasena una sola vez al inicio
-- Presenta menu interactivo con 3 opciones
-
----
-
-## Menu del Instalador
-
-```
-  1) Instalacion Limpia desde 0 (Destructiva/Completa)
-  2) Reinstalar / Restaurar Entorno (Sobrescribir dotfiles)
-  3) Actualizar solo Scripts de Servicios
-  0) Salir
-```
-
----
-
-## Opcion 1: Instalacion Destructiva
-
-Proceso automatico en 7 fases. Solo requiere 2 confirmaciones (inicio + pre-limpieza).
-
-### Pre-limpieza (con autorizacion)
-
-Si se detectan carpetas de un despliegue anterior, el script pregunta:
-
-```
-Se detectaron carpetas de un entorno anterior.
-Eliminar completamente la estructura previa? (s/n):
-```
-
-- **s**: Borra todo y comienza desde cero
-- **n**: Mantiene lo existente, instala encima
-
-### Fases de ejecucion
-
-| Fase | Accion |
-|------|--------|
-| 1/7 | Enmascarar servicios de red + kill procesos graficos + purga KDE/SDDM/GDM |
-| 2/7 | apt --reinstall forzado (50+ paquetes) + LightDM sin prompts |
-| 3/7 | bspwm-session + bspwm.desktop + xinitrc + mask SDDM + enable LightDM |
-| 4/7 | Reinstalar Kitty, Neovim, Powerlevel10k, fzf (sobreescritura forzada) |
-| 5/7 | Crear estructura + copiar scripts y configs desde el repo |
-| 6/7 | chmod +x + Nerd Fonts + chown dinamico al usuario detectado |
-| 7/7 | Shell zsh + UFW + comando update + restart LightDM |
-
----
-
-## Opcion 2: Reinstalar Configuracion
-
-- Sobrescribe ~/.config/ y scripts
-- Aplica permisos y propiedad
-- No reinstala paquetes ni binarios
-
----
-
-## Opcion 3: Actualizar Scripts
-
-Solo copia los scripts de servicios desde el repo:
-- gestionar_compartidos.sh, startfire.sh, startssh.sh, startftp.sh, open_ftp.sh
-
----
-
-## Portabilidad
-
-El script NO contiene rutas estaticas ni nombres de usuario hardcodeados. Detecta:
-
-| Variable | Como se obtiene |
-|----------|-----------------|
-| TARGET_USER | `$SUDO_USER` -> `logname` -> `who` |
-| TARGET_HOME | `getent passwd $TARGET_USER` (campo 6) |
-| REPO_DIR | Directorio donde reside el script |
-
-Esto permite que funcione en cualquier maquina con cualquier usuario.
-
----
-
-## Post-Instalacion
+Despues de completar, reiniciar:
 
 ```bash
 sudo reboot
 ```
 
-LightDM arranca automaticamente con BSPWM. No requiere seleccion manual.
-
 ---
 
-## Problemas Frecuentes
+## Opciones de Ejecucion
 
-| Problema | Solucion |
-|----------|----------|
-| apt se congela | Script enmascara isc-dhcp-server automaticamente |
-| Prompt interactivo Debian | DEBIAN_FRONTEND=noninteractive + force-conf |
-| BSPWM no en login | Ejecutar opcion 1 (crea .desktop + bspwm-session) |
-| Pantalla negra | Permisos de bspwmrc (se corrigen en fase 6) |
-| Carpetas vacias | Copia recursiva real desde REPO_DIR (fase 5) |
-| Rebote en login (files owned by root) | chown -R $TARGET_USER:$TARGET_USER $HOME (fase 6) |
-
----
-
-## Actualizar
+### Modo Automatico (desatendido)
 
 ```bash
-cd ~/dotfiles && git pull origin main
-sudo bash install_environment.sh
-# Opcion 2 o 3
+sudo bash install_environment.sh --auto
 ```
+
+Instala todo sin preguntas. Ideal para despliegue limpio desde snapshot.
+
+### Modo Interactivo (menu)
+
+```bash
+sudo bash install_environment.sh
+```
+
+Muestra un menu con opciones para instalar por fases.
+
+### Forzar usuario especifico
+
+Si la deteccion automatica falla (ej: ejecutando desde `su - root`):
+
+```bash
+sudo bash install_environment.sh --auto --user=nombre_usuario
+```
+
+---
+
+## Fases de Instalacion
+
+| Fase | Descripcion |
+|------|-------------|
+| 0 - Pre-flight | Saneamiento APT/DPKG: mata procesos, limpia candados, repara base |
+| 1 - Sistema | Detecta sesion grafica, configura Xorg/LightDM |
+| 2 - Paquetes | Instala WM, shell, dev tools, seguridad, utilidades |
+| 3 - Sesion | Despliega bspwm-session, .desktop, configura LightDM |
+| 4 - Binarios | Kitty, Neovim, Powerlevel10k, fzf, plugin sudo zsh |
+| 5 - Herramientas | i3lock-fancy, impacket, pspy, rofi-themes, ngrok, evil-winrm |
+| 6 - Despliegue | Copia configs, scripts, Apps, wallpaper, dotfiles, post_config.sh |
+| 7 - Permisos | chown, chmod +x, P10k root, enlace de scripts en PATH |
+| 8 - Seguridad | UFW, update command, LightDM enable |
+
+---
+
+## Deteccion de Usuario
+
+El script detecta automaticamente el usuario real (no root) con esta prioridad:
+
+1. Parametro `--user=nombre` (override explicito)
+2. Variable `$SUDO_USER`
+3. Comando `logname`
+4. Salida de `who` (excluyendo root)
+5. Propietario del directorio del script (quien hizo `git clone`)
+6. Primer usuario con UID >= 1000 en `/etc/passwd`
+
+---
+
+## Estructura Desplegada
+
+Despues de la instalacion, el sistema queda:
+
+```
+~/Desktop/USUARIO/
+├── Apps/                    Scripts de instalacion de aplicaciones
+│   ├── 7zip/
+│   ├── Anydesk/
+│   ├── Google_Chrome/
+│   ├── Keepass/
+│   ├── Kiro/
+│   ├── Nmap/
+│   ├── Opera_X/
+│   ├── Putty/
+│   ├── Remote_Control/
+│   ├── Telegram/
+│   ├── Thor_Onion/
+│   ├── Update/              Comando 'update' + logs
+│   ├── Visual_Code/
+│   └── WPS_Office/
+├── Ciberseguridad/
+│   ├── 1_Scripts/           bash, python, go, servicios
+│   ├── 2_Laboratorios/      Redes, HTB, Network_Drive
+│   ├── 3_Herramientas/      Escaneo, WiFi, OSINT, Phishing
+│   ├── 4_Servicios/         FTP, SSH, Samba, SMTP
+│   ├── 5_Wordlists/
+│   ├── 6_Documentos/
+│   └── 7_VPN/              HTB, TPLink
+├── Fondo_Pantalla/
+├── Kiro/
+└── post_config.sh           Configuracion post-instalacion
+
+~/.config/
+├── bspwm/                   WM config + scripts polybar
+├── sxhkd/                   Atajos de teclado
+├── polybar/                 Barra + temas + fuentes
+├── picom/                   Compositor
+├── kitty/                   Terminal
+├── rofi/                    Launcher + temas
+├── nvim/                    Editor (NvChad)
+├── neofetch/                Info sistema
+└── bin/target               Archivo de target para polybar
+```
+
+---
+
+## Post-Instalacion
+
+Despues de reiniciar y entrar a la sesion BSPWM:
+
+```bash
+bash ~/Desktop/$(whoami)/post_config.sh
+```
+
+| Opcion | Funcion |
+|--------|---------|
+| 1 | Configurar Powerlevel10k (wizard, replicar, root) |
+| 2 | Instalar Apps desde ~/Desktop/usuario/Apps/ |
+| 3 | Configurar interfaces de red |
+| 4 | Validar scripts y funciones |
+| 5 | Ver todas las funciones y comandos disponibles |
+
+---
+
+## Comando Update (con Snapshot)
+
+Despues de instalar Apps/Update:
+
+```bash
+sudo update
+```
+
+Este comando:
+1. Crea snapshot automatica con Timeshift
+2. Ejecuta `parrot-upgrade -y`
+3. Guarda log en `~/Desktop/usuario/Apps/Update/logs/`
+
+---
+
+## Solucion de Problemas
+
+### LightDM no muestra sesion BSPWM
+```bash
+cat /usr/share/xsessions/bspwm.desktop
+cat /usr/bin/bspwm-session
+```
+
+### bspwm arranca pero sin keybindings
+```bash
+cat ~/install_logs/bspwm-session.log
+which sxhkd
+```
+
+### Funciones no disponibles (command not found)
+```bash
+source ~/.zshrc
+# o ejecutar:
+bash ~/Desktop/$(whoami)/post_config.sh
+# Opcion 4 -> Enlazar scripts al PATH
+```
+
+### P10k no carga
+```bash
+p10k configure
+```
+
+---
+
+## Logs
+
+| Log | Ubicacion |
+|-----|-----------|
+| Instalacion | `~/install_logs/install_FECHA.log` |
+| Sesion BSPWM | `~/install_logs/bspwm-session.log` |
+| Updates | `~/Desktop/usuario/Apps/Update/logs/` |
+| Samba | `~/Desktop/usuario/Ciberseguridad/4_Servicios/.../samba.log` |
