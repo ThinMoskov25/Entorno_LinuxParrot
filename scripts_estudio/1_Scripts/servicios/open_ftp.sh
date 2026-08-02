@@ -52,7 +52,7 @@ activar_ftp() {
     # Generar credenciales temporales
     local ftp_user="uftp$(shuf -i 100-999 -n 1)"
     local ftp_pass="Pass$(shuf -i 1000-9999 -n 1)+"
-    local conexiones_root="${HOME}/Desktop/Moskov/Ciberseguridad/4_Servicios/Conexiones_Servicios/FTP"
+    local conexiones_root="${HOME}/Desktop/$(whoami)/Ciberseguridad/4_Servicios/Conexiones_Servicios/FTP"
     mkdir -p "$conexiones_root"
     local ftp_dir="$conexiones_root/tmp_${ftp_user}"
 

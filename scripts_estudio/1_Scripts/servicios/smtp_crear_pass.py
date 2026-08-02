@@ -15,7 +15,7 @@ import tempfile
 import shutil
 
 DEFAULT_HOST = "[smtp.gmail.com]:587"
-DEFAULT_BASE_DIR = os.path.expanduser("~/Desktop/Moskov/Ciberseguridad/Local_Services/SMTP/pass")
+DEFAULT_BASE_DIR = os.path.expanduser("~/Desktop/" + os.getlogin() + "/Ciberseguridad/Local_Services/SMTP/pass")
 DEFAULT_FILENAME = "pass_smtp"
 
 

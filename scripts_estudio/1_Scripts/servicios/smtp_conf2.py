@@ -5,7 +5,7 @@ from datetime import datetime
 from getpass import getpass
 
 # --- Configuración de rutas ---
-BASE_DIR = os.path.expanduser("~/Desktop/Moskov/Ciberseguridad/Local_Services/SMTP")
+BASE_DIR = os.path.expanduser("~/Desktop/" + os.getlogin() + "/Ciberseguridad/Local_Services/SMTP")
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 PASS_DIR = os.path.join(BASE_DIR, "pass")
 PASS_FILE = os.path.join(PASS_DIR, "gmail_app_pass.txt")

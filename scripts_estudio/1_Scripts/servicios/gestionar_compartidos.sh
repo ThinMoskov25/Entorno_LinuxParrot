@@ -22,7 +22,7 @@ fi
 SHARE_BASE="/srv/samba/shares"
 SMB_CONF="/etc/samba/smb.conf"
 REAL_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
-LOG_FILE="$REAL_HOME/Desktop/Moskov/Ciberseguridad/4_Servicios/Conexiones_Servicios/Unidades_Compartidas/samba.log"
+LOG_FILE="$REAL_HOME/Desktop/${SUDO_USER:-$USER}/Ciberseguridad/4_Servicios/Conexiones_Servicios/Unidades_Compartidas/samba.log"
 RESULTADO=""
 
 mkdir -p "$SHARE_BASE" "$(dirname "$LOG_FILE")" 2>/dev/null

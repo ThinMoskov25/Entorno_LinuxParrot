@@ -88,6 +88,10 @@ fi
 #Custom funtions
 #--------------------------------
 
+#Directorio base del entorno (dinamico por usuario)
+export MOSKOV_BASE="$HOME/Desktop/$(whoami)"
+export CIBER_BASE="$MOSKOV_BASE/Ciberseguridad"
+
 #Refresh zshrc
 function refresh(){
     source ~/.zshrc
@@ -169,13 +173,13 @@ extractPorts () {
 
 #Ingresar directorio
 
-alias cdm='cd $HOME/Desktop/Moskov/Ciberseguridad'
+alias cdm='cd $CIBER_BASE'
 
 # Servicios de red (aplicativos interactivos)
-alias startftp='bash $HOME/Desktop/Moskov/Ciberseguridad/1_Scripts/servicios/startftp.sh'
-alias startssh='bash $HOME/Desktop/Moskov/Ciberseguridad/1_Scripts/servicios/startssh.sh'
-alias startfire='bash $HOME/Desktop/Moskov/Ciberseguridad/1_Scripts/servicios/startfire.sh'
-alias compartidos="sudo bash \${HOME}/Desktop/Moskov/Ciberseguridad/1_Scripts/servicios/gestionar_compartidos.sh"
+alias startftp='bash $CIBER_BASE/1_Scripts/servicios/startftp.sh'
+alias startssh='bash $CIBER_BASE/1_Scripts/servicios/startssh.sh'
+alias startfire='bash $CIBER_BASE/1_Scripts/servicios/startfire.sh'
+alias compartidos="sudo bash \$CIBER_BASE/1_Scripts/servicios/gestionar_compartidos.sh"
 
 # Info Batería + Fecha/Hora (verde en terminal)
 
@@ -202,7 +206,7 @@ infbat() {
 # NetAudit - Herramienta de auditoría de red
 # Modo interactivo (menú)
 netaudit() {
-    sudo "$HOME/Desktop/Moskov/Ciberseguridad/1_Scripts/go/netaudit/netaudit" "$@"
+    sudo "$CIBER_BASE/1_Scripts/go/netaudit/netaudit" "$@"
 }
 
 # NetAudit - Modo comando directo
@@ -211,10 +215,10 @@ netscan() {
     shift 2>/dev/null
     case "$cmd" in
         discover|scan|banner|sockets|firewall|audit)
-            sudo "$HOME/Desktop/Moskov/Ciberseguridad/1_Scripts/go/netaudit/netaudit" "$cmd" "$@"
+            sudo "$CIBER_BASE/1_Scripts/go/netaudit/netaudit" "$cmd" "$@"
             ;;
         help|-h|--help|"")
-            "$HOME/Desktop/Moskov/Ciberseguridad/1_Scripts/go/netaudit/netaudit" help
+            "$CIBER_BASE/1_Scripts/go/netaudit/netaudit" help
             ;;
         *)
             echo "[!] Comando desconocido: $cmd"

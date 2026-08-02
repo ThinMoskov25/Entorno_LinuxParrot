@@ -1,0 +1,261 @@
+================================================================================
+ FUNCIONES, COMANDOS Y ATAJOS DEL ENTORNO - Moskov
+ Fecha de generacion: 2 de Agosto 2026
+ Shell: zsh | WM: bspwm | Terminal: kitty
+================================================================================
+
+
+================================================================================
+ 1. FUNCIONES PERSONALIZADAS (definidas en ~/.zshrc)
+================================================================================
+
+  refresh
+    - Recarga la configuracion de zsh sin cerrar terminal
+    - Uso: refresh
+
+  settarget <IP> <NOMBRE>
+    - Establece un target (IP + nombre maquina) para la barra de polybar
+    - Uso: settarget 10.10.10.5 MetaTwo
+
+  cleartarget
+    - Limpia el target configurado
+    - Uso: cleartarget
+
+  wificonect
+    - Abre menu interactivo Python para conectar WiFi (nmcli)
+    - Uso: wificonect
+
+  wifiscan
+    - Lanza el script de modo monitor para la antena TL-WN722N
+    - Opciones: compilar driver, activar monitor, restaurar red
+    - Uso: wifiscan
+
+  resnet
+    - Restaura servicios de red (NetworkManager, wpa_supplicant)
+    - Coloca la interfaz de vuelta en modo managed
+    - Uso: resnet
+
+  mkt
+    - Crea estructura de directorios para pentesting
+    - Crea: nmap/ content/ scripts/ vpn/
+    - Uso: mkt
+
+  whichsystem <IP>
+    - Detecta sistema operativo por TTL (ping)
+    - TTL <= 64 = Linux | TTL 65-128 = Windows
+    - Uso: whichsystem 10.10.10.5
+
+  extractPorts <archivo_nmap>
+    - Extrae puertos abiertos de un escaneo nmap formato grepable
+    - Copia los puertos al portapapeles (xclip)
+    - Uso: extractPorts allPorts.gnmap
+
+  infbat
+    - Muestra fecha/hora + estado de bateria en verde
+    - Uso: infbat
+
+  netaudit
+    - Herramienta de auditoria de red (binario Go) - modo interactivo
+    - Uso: netaudit
+
+  netscan <comando>
+    - Herramienta de auditoria de red - modo comando directo
+    - Comandos: discover, scan, banner, sockets, firewall, audit, help
+    - Uso: netscan discover 192.168.1.0/24
+
+
+================================================================================
+ 2. FUNCIONES BASH (definidas en ~/.bashrc)
+================================================================================
+
+  hex-encode <texto>
+    - Codifica texto a hexadecimal
+    - Uso: hex-encode "hola mundo"
+
+  hex-decode <hex>
+    - Decodifica hexadecimal a texto
+    - Uso: hex-decode "686f6c61"
+
+  rot13 <texto>
+    - Aplica cifrado ROT13
+    - Uso: rot13 "hello"
+
+  man <comando>  (version coloreada)
+    - Muestra paginas de manual con colores mejorados
+
+
+================================================================================
+ 3. ALIASES (definidos en ~/.zshrc)
+================================================================================
+
+  -- Visor de archivos (bat) --
+  cat         -> bat (con sintaxis resaltada)
+  catn        -> bat --style=plain (sin decoracion)
+  catnp       -> bat --style=plain --paging=never
+
+  -- Listado de archivos (lsd) --
+  ls          -> lsd --group-dirs=first
+  ll          -> lsd -lh --group-dirs=first
+  la          -> lsd -a --group-dirs=first
+  lla         -> lsd -lha --group-dirs=first
+  l           -> lsd --group-dirs=first
+
+  -- Navegacion --
+  cdm         -> cd $HOME/Desktop/Moskov/Ciberseguridad
+
+  -- Servicios de red (TUI interactivas) --
+  startftp    -> Gestor interactivo FTP (pyftpdlib)
+  startssh    -> Gestor interactivo SSH (conexiones/perfiles/llaves)
+  startfire   -> Gestor interactivo Firewall UFW (sudo)
+  compartidos -> Gestor Samba de unidades compartidas (sudo)
+
+  -- Bash aliases adicionales --
+  em          -> emacs -nw
+  _           -> sudo
+  _i          -> sudo -i
+  fucking     -> sudo
+  please      -> sudo
+
+
+================================================================================
+ 4. ATAJOS DE TECLADO (sxhkd - bspwm)
+================================================================================
+
+  -- Aplicaciones --
+  Super + Return            -> Kitty (terminal)
+  Super + d                 -> Rofi (launcher)
+  Super + Shift + f         -> Firefox
+  Super + Shift + g         -> Google Chrome
+  Super + Shift + o         -> Tor Browser
+  Super + Shift + x         -> i3lock-fancy (bloqueo pantalla)
+  Super + Shift + p         -> Flameshot (captura)
+  Super + p                 -> Flameshot (captura)
+  Print                     -> Flameshot (captura)
+
+  -- Ventanas --
+  Super + q                 -> Cerrar ventana
+  Super + m                 -> Monocle layout (toggle)
+  Super + {t,Shift+t,s,f}   -> Estado: tiled/pseudo/floating/fullscreen
+  Super + Flechas           -> Mover foco
+  Super + Shift + Flechas   -> Mover ventana
+  Super + Alt + Flechas     -> Redimensionar ventana
+  Super + {1-9,0}           -> Ir a escritorio 1-10
+  Super + Shift + {1-9,0}   -> Enviar ventana a escritorio
+
+  -- Sistema --
+  Super + Escape            -> Recargar sxhkd
+  Super + Alt + q           -> Salir de bspwm
+  Super + Alt + r           -> Reiniciar bspwm
+  Super + Tab               -> Ultimo escritorio
+  Super + grave (`)         -> Ultimo nodo
+
+
+================================================================================
+ 5. SCRIPTS DE SERVICIOS (TUI interactivas)
+================================================================================
+
+  startftp (alias)
+    Gestor FTP con pyftpdlib:
+    - Iniciar FTP rapido (anonimo, puerto 2121)
+    - Iniciar personalizado (usuario+password+puerto)
+    - Conectar a FTP remoto
+    - Detener servidor / Ver logs / Estado
+
+  startssh (alias)
+    Gestor SSH completo:
+    - Activar/Detener servicio SSH
+    - Conectar a host remoto
+    - Gestionar perfiles guardados (agregar/eliminar)
+    - Generar llaves SSH (ed25519)
+    - Copiar llave a host remoto
+
+  startfire (alias, requiere sudo)
+    Gestor Firewall UFW:
+    - Activar/Detener firewall
+    - Ver estado y reglas
+    - Permitir/Bloquear puertos (TCP/UDP)
+    - Denegar IP completa o por puerto
+    - Eliminar reglas individuales
+    - Reset completo
+    - Escaneo de puertos locales en LISTEN
+
+  compartidos (alias, requiere sudo)
+    Gestor Samba v6.0:
+    - Creacion recomendada (asistida, 1 paso con test automatico)
+    - Crear compartido manual (autenticado o guest)
+    - Crear/Editar/Eliminar usuarios Samba
+    - Gestion: agregar usuario a compartido, toggle lectura/guest
+    - Ver estado, conexiones activas
+    - Diagnostico y test de conectividad
+
+
+================================================================================
+ 6. SCRIPTS DE BSPWM (polybar + utilidades)
+================================================================================
+
+  ethernet.sh    -> Detecta IP de interfaz ethernet para polybar
+  wifi.sh        -> Detecta IP de interfaz WiFi para polybar
+  vpn.sh         -> Muestra IP de tun0 (VPN) en polybar
+  target.sh      -> Muestra target actual (IP + nombre) en polybar
+  infbat.sh      -> Muestra bateria + fecha/hora en polybar
+  bspwm_resize   -> Script de redimensionado personalizado de ventanas
+
+
+================================================================================
+ 7. SCRIPTS DE WIFI/RED
+================================================================================
+
+  wifi_conect.py
+    Menu interactivo Python para WiFi:
+    - Escanear redes disponibles (nmcli)
+    - Conectar por SSID + password
+    - Desconectar red actual
+    - Log de errores autoborrable (5 min)
+
+  tlwn722n-monitormode.sh
+    Modo monitor para TL-WN722N:
+    - Compilar kernel/driver (rtl8188eus)
+    - Activar modo monitor
+    - Escaneo de redes con airodump-ng
+    - Generar informe de redes en .txt
+    - Restaurar procesos de red
+
+  restar_Ser.sh
+    Restaurar servicios de red:
+    - Detecta interfaces inalambricas
+    - Reinicia NetworkManager + wpa_supplicant
+    - Restaura interfaz a modo managed
+
+
+================================================================================
+ 8. HERRAMIENTAS INSTALADAS Y CONFIGURACION
+================================================================================
+
+  Shell:     zsh + Powerlevel10k + autosuggestions + syntax-highlighting
+  Terminal:  kitty
+  WM:        bspwm + sxhkd
+  Barra:     polybar
+  Launcher:  rofi
+  Editor:    nvim (NvChad)
+  Archivos:  lsd (ls mejorado) + bat (cat mejorado)
+  Busqueda:  fzf (fuzzy finder)
+  Lock:      i3lock-fancy
+  Capturas:  flameshot
+  Compositor: picom
+
+  PATH automatico: todos los bin/ dentro de /opt/ se agregan dinamicamente
+
+
+================================================================================
+ 9. VARIABLES DE ENTORNO IMPORTANTES
+================================================================================
+
+  _JAVA_AWT_WM_NONREPARENTING=1   (Fix Java en bspwm)
+  HISTSIZE=10000
+  SAVEHIST=10000
+  SHARE_BASE=/srv/samba/shares     (Samba compartidos)
+
+
+================================================================================
+ FIN DEL DOCUMENTO
+================================================================================

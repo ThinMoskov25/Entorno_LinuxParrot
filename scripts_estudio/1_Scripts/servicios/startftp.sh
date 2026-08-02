@@ -13,7 +13,7 @@ G="\033[0;32m"; C="\033[0;36m"; Y="\033[1;33m"; R="\033[0;31m"
 B="\033[1;37m"; DIM="\033[2m"; RST="\033[0m"
 
 # ─── VARIABLES ───────────────────────────────────────────────────────────────
-CONEXIONES_ROOT="${HOME}/Desktop/Moskov/Ciberseguridad/4_Servicios/Conexiones_Servicios"
+CONEXIONES_ROOT="${HOME}/Desktop/$(whoami)/Ciberseguridad/4_Servicios/Conexiones_Servicios"
 WORK_DIR="$CONEXIONES_ROOT/FTP"
 LOG_DIR="$WORK_DIR/logs"
 FTP_SHARE="$WORK_DIR/FTP_Share"

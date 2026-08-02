@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Ruta base (ya existente)
-BASE_DIR="/home/moskov/Desktop/Moskov/Apps/Google_Chrome"
+BASE_DIR="$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)/Desktop/${SUDO_USER:-$USER}/Apps/Google_Chrome"
 LOG_DIR="$BASE_DIR/logs"
 
 # Crear carpeta de logs si no existe
