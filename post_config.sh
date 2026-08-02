@@ -14,8 +14,13 @@ G="\033[0;32m"; C="\033[0;36m"; Y="\033[1;33m"; R="\033[0;31m"
 B="\033[1;37m"; DIM="\033[2m"; RST="\033[0m"
 
 # ─── DETECCION DE USUARIO Y RUTAS ────────────────────────────────────────────
-CURRENT_USER="$(whoami)"
-USER_HOME="$HOME"
+if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+    CURRENT_USER="$SUDO_USER"
+    USER_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+else
+    CURRENT_USER="$(whoami)"
+    USER_HOME="$HOME"
+fi
 USER_DIR="$USER_HOME/Desktop/$CURRENT_USER"
 APPS_DIR="$USER_DIR/Apps"
 CIBER_DIR="$USER_DIR/Ciberseguridad"
@@ -105,11 +110,6 @@ p10k_replicar() {
 }
 
 p10k_root() {
-    if [[ "$(id -u)" -ne 0 ]]; then
-        RESULTADO="  ${R}[!]${RST} Requiere root: sudo bash post_config.sh"
-        return
-    fi
-
     local src="$USER_HOME/.p10k.zsh"
     [[ ! -f "$src" ]] && src="/tmp/entorno/zsh/.p10k.zsh"
     if [[ ! -f "$src" ]]; then
@@ -117,11 +117,11 @@ p10k_root() {
         return
     fi
 
-    cp -f "$src" /root/.p10k.zsh
+    sudo cp -f "$src" /root/.p10k.zsh
     [[ -d "$USER_HOME/powerlevel10k" && ! -d /root/powerlevel10k ]] && \
-        cp -r "$USER_HOME/powerlevel10k" /root/powerlevel10k
+        sudo cp -r "$USER_HOME/powerlevel10k" /root/powerlevel10k
 
-    cat > /root/.zshrc << 'ROOTZSH'
+    sudo tee /root/.zshrc > /dev/null << 'ROOTZSH'
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
@@ -129,11 +129,25 @@ source /root/powerlevel10k/powerlevel10k.zsh-theme
 [ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 [ -f /usr/share/zsh-sudo/sudo.plugin.zsh ] && source /usr/share/zsh-sudo/sudo.plugin.zsh
+
+# Autocompletado case-insensitive
+autoload -Uz compinit
+compinit
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
+
+# PATH
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/usr/local/games:/usr/games"
+if [ -d /opt ]; then
+    for dir in $(find /opt -maxdepth 3 -type d -name "bin" 2>/dev/null); do
+        export PATH="$dir:$PATH"
+    done
+fi
+
 [[ ! -f /root/.p10k.zsh ]] || source /root/.p10k.zsh
 ROOTZSH
 
-    chsh -s /usr/bin/zsh root 2>/dev/null
-    RESULTADO="  ${G}[+]${RST} P10k replicado en root\n  ${G}[+]${RST} Shell root: zsh\n  ${DIM}sudo su para verificar${RST}"
+    sudo chsh -s /usr/bin/zsh root 2>/dev/null
+    RESULTADO="  ${G}[+]${RST} P10k replicado en root\n  ${G}[+]${RST} Shell root: zsh\n  ${G}[+]${RST} Autocompletado case-insensitive\n  ${DIM}sudo su para verificar${RST}"
 }
 
 # =============================================================================

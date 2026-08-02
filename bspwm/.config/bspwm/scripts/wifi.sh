@@ -1,16 +1,25 @@
 #!/bin/sh
 
-# Interfaz a verificar
-INTERFACE="wlo1"
+# Detectar interfaz WiFi dinamicamente
+INTERFACE=""
+for iface in $(ls /sys/class/net/ 2>/dev/null); do
+    if [ -d "/sys/class/net/$iface/wireless" ]; then
+        INTERFACE="$iface"
+        break
+    fi
+done
 
-# Obtener la dirección IP de la interfaz especificada
-IP=$( /usr/sbin/ifconfig $INTERFACE | grep "inet " | awk '{print $2}' )
+# Si no hay interfaz wireless
+if [ -z "$INTERFACE" ]; then
+    echo "%{F#f28a8c}󰖪 %{F#ffffff}Disconnected %{u-}"
+    exit 0
+fi
 
-# Si la IP está vacía, significa que la interfaz no tiene una IP asignada
+# Obtener IP
+IP=$(ip -4 addr show "$INTERFACE" 2>/dev/null | grep "inet " | awk '{print $2}' | cut -d/ -f1 | head -1)
+
 if [ -z "$IP" ]; then
-    # Mostrar un icono de "Disconnected" en color rojo suave
     echo "%{F#f28a8c}󰖪 %{F#ffffff}Disconnected %{u-}"
 else
-    # Si hay IP, mostrarla en el formato adecuado
     echo "%{F#2495e7}󰖩 %{F#ffffff}$IP%{u-}"
 fi
