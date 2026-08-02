@@ -8,7 +8,7 @@
 export HOME="${HOME:-$(getent passwd $(whoami) | cut -d: -f6)}"
 
 # sxhkd (solo si no esta corriendo ya)
-pgrep -x sxhkd > /dev/null || sxhkd -c "$HOME/.config/sxhkd/sxhkdrc" &
+pgrep -x sxhkd > /dev/null || /usr/local/bin/sxhkd -c "$HOME/.config/sxhkd/sxhkdrc" &
 
 # Configuracion de monitor y espacios
 bspc monitor -d I II III IV V VI VII VIII IX X
@@ -31,7 +31,8 @@ bspc rule -a Screenkey manage=off
 # --- Lanzadores tolerantes a fallos (background, no bloquean) ---
 
 # Wallpaper
-WALLPAPER="$HOME/Desktop/Moskov/Fondo_Pantalla/fondo.jpeg"
+USER_DIR="$HOME/Desktop/$(whoami)"
+WALLPAPER="$USER_DIR/Fondo_Pantalla/fondo.jpeg"
 if [ -f "$WALLPAPER" ]; then
     feh --bg-fill "$WALLPAPER" 2>/dev/null &
 fi
