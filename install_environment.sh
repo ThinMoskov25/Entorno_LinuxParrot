@@ -691,6 +691,13 @@ fase_despliegue() {
     [[ -f "$REPO_DIR/zshrc" ]] && cp -f "$REPO_DIR/zshrc" "$REAL_HOME/.zshrc" && log_ok ".zshrc"
     [[ -f "$REPO_DIR/zsh/.p10k.zsh" ]] && cp -f "$REPO_DIR/zsh/.p10k.zsh" "$REAL_HOME/.p10k.zsh" && log_ok ".p10k.zsh"
 
+    # Desplegar script de post-configuración en el escritorio
+    if [[ -f "$REPO_DIR/post_config.sh" ]]; then
+        cp -f "$REPO_DIR/post_config.sh" "$MOSKOV_DIR/post_config.sh"
+        chmod +x "$MOSKOV_DIR/post_config.sh"
+        log_ok "post_config.sh desplegado en $MOSKOV_DIR/"
+    fi
+
     echo ""
     log_ok "FASE 6 COMPLETADA"
 }
@@ -752,6 +759,48 @@ fase_permisos() {
     else
         log_err "ERROR en chown"
     fi
+
+    # ─── P10k para root ─────────────────────────────────────────────────
+    log_proc "Configurando P10k para root..."
+    if [[ -f "$REAL_HOME/.p10k.zsh" ]]; then
+        cp -f "$REAL_HOME/.p10k.zsh" /root/.p10k.zsh
+    elif [[ -f "$REPO_DIR/zsh/.p10k.zsh" ]]; then
+        cp -f "$REPO_DIR/zsh/.p10k.zsh" /root/.p10k.zsh
+    fi
+    [[ -d "$REAL_HOME/powerlevel10k" ]] && [[ ! -d /root/powerlevel10k ]] && \
+        cp -r "$REAL_HOME/powerlevel10k" /root/powerlevel10k
+    # .zshrc de root
+    if [[ ! -f /root/.zshrc ]] || ! grep -q "powerlevel10k" /root/.zshrc 2>/dev/null; then
+        cat > /root/.zshrc << 'ROOTZSH'
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+source /root/powerlevel10k/powerlevel10k.zsh-theme
+[ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+[ -f /usr/share/zsh-sudo/sudo.plugin.zsh ] && source /usr/share/zsh-sudo/sudo.plugin.zsh
+[[ ! -f /root/.p10k.zsh ]] || source /root/.p10k.zsh
+ROOTZSH
+    fi
+    chsh -s /usr/bin/zsh root 2>/dev/null || true
+    log_ok "P10k configurado para root"
+
+    # ─── Scripts accesibles en PATH ──────────────────────────────────────
+    log_proc "Enlazando scripts de servicios en PATH..."
+    mkdir -p "$REAL_HOME/.local/bin"
+    if [[ -d "$CIBER_DIR/1_Scripts/servicios" ]]; then
+        for script in "$CIBER_DIR/1_Scripts/servicios/"*.sh; do
+            [[ -f "$script" ]] || continue
+            local name=$(basename "$script" .sh)
+            ln -sf "$script" "$REAL_HOME/.local/bin/$name"
+        done
+    fi
+    # Asegurar PATH en .zshrc
+    if ! grep -q "\.local/bin" "$REAL_HOME/.zshrc" 2>/dev/null; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$REAL_HOME/.zshrc"
+    fi
+    chown -R "$REAL_USER:$REAL_USER" "$REAL_HOME/.local/bin"
+    log_ok "Scripts de servicios accesibles desde terminal"
 
     echo ""
     log_ok "FASE 7 COMPLETADA"
