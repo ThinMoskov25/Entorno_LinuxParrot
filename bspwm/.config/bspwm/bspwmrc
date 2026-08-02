@@ -8,7 +8,7 @@
 export HOME="${HOME:-$(getent passwd $(whoami) | cut -d: -f6)}"
 
 # sxhkd (solo si no esta corriendo ya)
-pgrep -x sxhkd > /dev/null || /usr/local/bin/sxhkd -c "$HOME/.config/sxhkd/sxhkdrc" &
+pgrep -x sxhkd > /dev/null || sxhkd -c "$HOME/.config/sxhkd/sxhkdrc" &
 
 # Configuracion de monitor y espacios
 bspc monitor -d I II III IV V VI VII VIII IX X

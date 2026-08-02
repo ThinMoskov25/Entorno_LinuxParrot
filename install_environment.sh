@@ -365,47 +365,64 @@ fase_xsession() {
     echo -e "  ${B}FASE 3/8: Sesion BSPWM para LightDM${RST}\n"
 
     # --- bspwm-session: script ultra-defensivo ---
-    cat > /usr/bin/bspwm-session <<BSEOF
+    cat > /usr/bin/bspwm-session <<'BSEOF'
 #!/bin/sh
 # Moskov Environment - BSPWM Session Launcher
 # Este script es ejecutado por LightDM al iniciar sesion
 
-# 1. Garantizar HOME (LightDM a veces no la exporta)
-export HOME="\${HOME:-\$(getent passwd \$(id -un) | cut -d: -f6)}"
+# 1. Garantizar HOME y PATH completo
+export HOME="${HOME:-$(getent passwd $(id -un) | cut -d: -f6)}"
 export XDG_CURRENT_DESKTOP="bspwm"
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
-export XDG_CONFIG_HOME="\$HOME/.config"
+export XDG_CONFIG_HOME="$HOME/.config"
 
 # 2. Log de depuracion
-mkdir -p "\$HOME/install_logs"
-LOGF="\$HOME/install_logs/bspwm-session.log"
-echo "=== [\$(date)] SESSION START ===" >> "\$LOGF"
-echo "USER=\$(id -un) HOME=\$HOME" >> "\$LOGF"
-echo "PATH=\$PATH" >> "\$LOGF"
+mkdir -p "$HOME/install_logs"
+LOGF="$HOME/install_logs/bspwm-session.log"
+echo "=== [$(date)] SESSION START ===" >> "$LOGF"
+echo "USER=$(id -un) HOME=$HOME" >> "$LOGF"
+echo "PATH=$PATH" >> "$LOGF"
 
-# 3. Verificar que bspwmrc existe y es ejecutable
-BSPWMRC="\$HOME/.config/bspwm/bspwmrc"
-if [ ! -f "\$BSPWMRC" ]; then
-    echo "ERROR: \$BSPWMRC no existe" >> "\$LOGF"
-    # Crear uno minimo para que bspwm no muera
-    mkdir -p "\$HOME/.config/bspwm"
-    echo '#!/bin/sh' > "\$BSPWMRC"
-    echo 'bspc monitor -d I II III IV V' >> "\$BSPWMRC"
+# 3. Detectar binarios (APT instala en /usr/bin, compilado en /usr/local/bin)
+SXHKD_BIN="$(command -v sxhkd 2>/dev/null)"
+BSPWM_BIN="$(command -v bspwm 2>/dev/null)"
+
+if [ -z "$SXHKD_BIN" ]; then
+    echo "ERROR: sxhkd no encontrado en PATH" >> "$LOGF"
 fi
-chmod +x "\$BSPWMRC"
+if [ -z "$BSPWM_BIN" ]; then
+    echo "ERROR: bspwm no encontrado en PATH" >> "$LOGF"
+    exit 1
+fi
 
-# 4. Lanzar sxhkd
-SXHKDRC="\$HOME/.config/sxhkd/sxhkdrc"
-if [ -f "\$SXHKDRC" ]; then
-    /usr/local/bin/sxhkd -c "\$SXHKDRC" >> "\$LOGF" 2>&1 &
-    echo "sxhkd PID=\$!" >> "\$LOGF"
+echo "SXHKD_BIN=$SXHKD_BIN" >> "$LOGF"
+echo "BSPWM_BIN=$BSPWM_BIN" >> "$LOGF"
+
+# 4. Verificar que bspwmrc existe y es ejecutable
+BSPWMRC="$HOME/.config/bspwm/bspwmrc"
+if [ ! -f "$BSPWMRC" ]; then
+    echo "ERROR: $BSPWMRC no existe, creando minimo" >> "$LOGF"
+    mkdir -p "$HOME/.config/bspwm"
+    echo '#!/bin/sh' > "$BSPWMRC"
+    echo 'bspc monitor -d I II III IV V' >> "$BSPWMRC"
+fi
+chmod +x "$BSPWMRC"
+
+# 5. Lanzar sxhkd
+SXHKDRC="$HOME/.config/sxhkd/sxhkdrc"
+if [ -n "$SXHKD_BIN" ] && [ -f "$SXHKDRC" ]; then
+    "$SXHKD_BIN" -c "$SXHKDRC" >> "$LOGF" 2>&1 &
+    echo "sxhkd PID=$!" >> "$LOGF"
+elif [ -n "$SXHKD_BIN" ]; then
+    "$SXHKD_BIN" >> "$LOGF" 2>&1 &
+    echo "sxhkd (default) PID=$!" >> "$LOGF"
 else
-    echo "WARN: sxhkdrc no encontrado" >> "\$LOGF"
+    echo "WARN: sxhkd no disponible" >> "$LOGF"
 fi
 
-# 5. Ejecutar bspwm (DEBE ser exec para mantener la sesion viva)
-echo "Launching: bspwm -c \$BSPWMRC" >> "\$LOGF"
-exec /usr/local/bin/bspwm -c "\$BSPWMRC"
+# 6. Ejecutar bspwm (DEBE ser exec para mantener la sesion viva)
+echo "Launching: $BSPWM_BIN -c $BSPWMRC" >> "$LOGF"
+exec "$BSPWM_BIN" -c "$BSPWMRC"
 BSEOF
     chmod 755 /usr/bin/bspwm-session
     log_ok "bspwm-session creado"
