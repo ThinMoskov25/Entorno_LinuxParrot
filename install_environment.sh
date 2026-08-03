@@ -454,11 +454,14 @@ EOF
 
     # --- Forzar LightDM a usar sesion BSPWM por defecto ---
     mkdir -p /etc/lightdm
-    cat > /etc/lightdm/lightdm.conf <<'EOF'
+    cat > /etc/lightdm/lightdm.conf <<EOF
 [Seat:*]
 autologin-user=
 user-session=bspwm
 greeter-session=lightdm-gtk-greeter
+greeter-hide-users=false
+greeter-show-manual-login=false
+allow-guest=false
 EOF
     log_ok "LightDM configurado: user-session=bspwm"
     # --- Configurar greeter para que no sea pantalla blanca ---
@@ -471,12 +474,25 @@ background = /usr/share/backgrounds/default.png
 user-background = true
 default-user-image = /usr/share/icons/Adwaita/256x256/status/avatar-default-symbolic.svg
 hide-user-image = false
+show-indicators = ~host;~spacer;~session;~power
+panel-position = top
 GREETEREOF
     # Intentar usar wallpaper propio si existe
     if [[ -f "$MOSKOV_DIR/Fondo_Pantalla/fondo.jpeg" ]]; then
         sed -i "s|background = .*|background = $MOSKOV_DIR/Fondo_Pantalla/fondo.jpeg|" /etc/lightdm/lightdm-gtk-greeter.conf
     fi
     log_ok "Greeter GTK configurado (tema oscuro)"
+    # --- Polkit: permitir shutdown/reboot/suspend sin password ---
+    mkdir -p /etc/polkit-1/localauthority/50-local.d
+    cat > /etc/polkit-1/localauthority/50-local.d/power-management.pkla <<'POLKIT'
+[Allow power management for local users]
+Identity=unix-user:*
+Action=org.freedesktop.login1.power-off;org.freedesktop.login1.power-off-multiple-sessions;org.freedesktop.login1.reboot;org.freedesktop.login1.reboot-multiple-sessions;org.freedesktop.login1.suspend;org.freedesktop.login1.suspend-multiple-sessions;org.freedesktop.login1.hibernate;org.freedesktop.login1.hibernate-multiple-sessions
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+POLKIT
+    log_ok "Polkit: power management sin password"
 
     # --- .xsession como fallback absoluto ---
     cat > "$REAL_HOME/.xsession" <<'XEOF'
