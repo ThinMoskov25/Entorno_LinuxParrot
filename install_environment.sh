@@ -531,6 +531,19 @@ fase_binarios() {
     else
         log_err "Error descargando Neovim"
     fi
+    # Bootstrap lazy.nvim para que nvim no falle en primer uso
+    log_proc "Bootstrap lazy.nvim..."
+    local NVIM_DATA="$REAL_HOME/.local/share/nvim"
+    local LAZY_PATH="$NVIM_DATA/lazy/lazy.nvim"
+    if [[ ! -d "$LAZY_PATH" ]]; then
+        mkdir -p "$NVIM_DATA/lazy"
+        run_as_user "git clone --filter=blob:none --branch=stable https://github.com/folke/lazy.nvim.git $LAZY_PATH" >> "$LOG_FILE" 2>&1 || true
+    fi
+    if [[ -d "$LAZY_PATH" ]]; then
+        log_ok "lazy.nvim bootstrap"
+    else
+        log_warn "lazy.nvim no se pudo clonar (se descargara al abrir nvim)"
+    fi
 
     # Powerlevel10k
     log_proc "Powerlevel10k..."
