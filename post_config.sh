@@ -429,50 +429,27 @@ verificar_path() {
 }
 
 enlazar_scripts() {
-    mkdir -p "$USER_HOME/.local/bin"
-    local count=0
+    RESULTADO="  ${B}Los scripts de servicios se acceden via aliases:${RST}\n\n"
+    RESULTADO+="  ${G}startftp${RST}       → Gestor FTP\n"
+    RESULTADO+="  ${G}startssh${RST}       → Gestor SSH\n"
+    RESULTADO+="  ${G}startfire${RST}      → Gestor Firewall (sudo)\n"
+    RESULTADO+="  ${G}compartidos${RST}    → Gestor Samba (sudo)\n"
+    RESULTADO+="\n  ${DIM}Estos aliases estan definidos en ~/.zshrc${RST}\n"
+    RESULTADO+="  ${DIM}Si no funcionan, ejecuta: source ~/.zshrc${RST}\n"
 
-    # Enlazar scripts de servicios
-    if [[ -d "$SCRIPTS_DIR/servicios" ]]; then
-        for script in "$SCRIPTS_DIR/servicios/"*.sh; do
+    # Verificar que los scripts existen y tienen permisos
+    local ciber="$USER_HOME/Desktop/$CURRENT_USER/Ciberseguridad"
+    if [[ -d "$ciber/1_Scripts/servicios" ]]; then
+        RESULTADO+="\n  ${B}Estado de scripts:${RST}\n"
+        for script in "$ciber/1_Scripts/servicios/"*.sh; do
             [[ -f "$script" ]] || continue
-            chmod +x "$script"
-            local name=$(basename "$script" .sh)
-            # Crear wrapper que ejecuta con sudo
-            cat > "$USER_HOME/.local/bin/$name" << WRAPPER
-#!/bin/bash
-sudo bash "$script" "\$@"
-WRAPPER
-            chmod +x "$USER_HOME/.local/bin/$name"
-            ((count++))
-        done
-    fi
-
-    # Enlazar scripts de bash
-    if [[ -d "$SCRIPTS_DIR/bash" ]]; then
-        for script in "$SCRIPTS_DIR/bash/"*.sh; do
-            [[ -f "$script" ]] || continue
-            chmod +x "$script"
-            local name=$(basename "$script" .sh)
-            cat > "$USER_HOME/.local/bin/$name" << WRAPPER
-#!/bin/bash
-sudo bash "$script" "\$@"
-WRAPPER
-            chmod +x "$USER_HOME/.local/bin/$name"
-            ((count++))
-        done
-    fi
-
-    # Asegurar PATH
-    if ! grep -q "\.local/bin" "$USER_HOME/.zshrc" 2>/dev/null; then
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$USER_HOME/.zshrc"
-    fi
-
-    RESULTADO="  ${G}[+]${RST} $count scripts enlazados en ~/.local/bin/\n  ${DIM}Se ejecutan con sudo automaticamente${RST}\n  ${DIM}Reinicia terminal o: source ~/.zshrc${RST}\n\n  ${B}Comandos disponibles:${RST}\n"
-    if [[ -d "$SCRIPTS_DIR/servicios" ]]; then
-        for script in "$SCRIPTS_DIR/servicios/"*.sh; do
-            [[ -f "$script" ]] || continue
-            RESULTADO+="    ${G}●${RST} $(basename "$script" .sh)\n"
+            local name=$(basename "$script")
+            if [[ -x "$script" ]]; then
+                RESULTADO+="  ${G}✓${RST} $name\n"
+            else
+                chmod +x "$script"
+                RESULTADO+="  ${Y}⚠${RST} $name → permiso corregido\n"
+            fi
         done
     fi
 }

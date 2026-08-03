@@ -802,21 +802,15 @@ ROOTZSH
     log_ok "P10k configurado para root"
 
     # ─── Scripts accesibles en PATH ──────────────────────────────────────
-    log_proc "Enlazando scripts de servicios en PATH..."
-    mkdir -p "$REAL_HOME/.local/bin"
-    if [[ -d "$CIBER_DIR/1_Scripts/servicios" ]]; then
-        for script in "$CIBER_DIR/1_Scripts/servicios/"*.sh; do
-            [[ -f "$script" ]] || continue
-            local name=$(basename "$script" .sh)
-            ln -sf "$script" "$REAL_HOME/.local/bin/$name"
-        done
-    fi
-    # Asegurar PATH en .zshrc
-    if ! grep -q "\.local/bin" "$REAL_HOME/.zshrc" 2>/dev/null; then
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$REAL_HOME/.zshrc"
-    fi
-    chown -R "$REAL_USER:$REAL_USER" "$REAL_HOME/.local/bin"
-    log_ok "Scripts de servicios accesibles desde terminal"
+    # NOTA: Los scripts de servicios se acceden via aliases en .zshrc
+    # (startftp, startssh, startfire, compartidos)
+    # Limpiar symlinks previos que causan fork bomb por recursion
+    rm -f "$REAL_HOME/.local/bin/gestionar_compartidos" 2>/dev/null
+    rm -f "$REAL_HOME/.local/bin/startftp" 2>/dev/null
+    rm -f "$REAL_HOME/.local/bin/startssh" 2>/dev/null
+    rm -f "$REAL_HOME/.local/bin/startfire" 2>/dev/null
+    rm -f "$REAL_HOME/.local/bin/open_ftp" 2>/dev/null
+    log_ok "Scripts accesibles via aliases en .zshrc (sin symlinks)"
 
     echo ""
     log_ok "FASE 7 COMPLETADA"
