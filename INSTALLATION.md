@@ -203,6 +203,33 @@ Esto fue corregido en v3.0 final — no deberia ocurrir en instalaciones nuevas.
 p10k configure
 ```
 
+### Powermenu no funciona (shutdown/reboot)
+Verificar que existe la regla polkit:
+```bash
+cat /etc/polkit-1/localauthority/50-local.d/power-management.pkla
+```
+Si no existe, crear manualmente:
+```bash
+sudo mkdir -p /etc/polkit-1/localauthority/50-local.d
+sudo tee /etc/polkit-1/localauthority/50-local.d/power-management.pkla <<'EOF'
+[Allow power management for local users]
+Identity=unix-user:*
+Action=org.freedesktop.login1.power-off;org.freedesktop.login1.power-off-multiple-sessions;org.freedesktop.login1.reboot;org.freedesktop.login1.reboot-multiple-sessions;org.freedesktop.login1.suspend;org.freedesktop.login1.suspend-multiple-sessions
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+EOF
+```
+
+### LightDM no muestra usuario
+```bash
+sudo nano /etc/lightdm/lightdm.conf
+```
+Asegurar que tenga:
+```
+greeter-hide-users=false
+```
+
 ---
 
 ## Logs

@@ -34,6 +34,9 @@
 - Rutas: todas dinamicas con nombre de usuario real
 - Fork bomb: eliminados symlinks en ~/.local/bin que causaban recursion infinita con sudo
 - Scripts de servicios accesibles SOLO via aliases en .zshrc (sin duplicacion en PATH)
+- LightDM greeter: muestra lista de usuarios (greeter-hide-users=false)
+- Polkit: regla para permitir shutdown/reboot/suspend desde powermenu sin password
+- Neovim: bootstrap de lazy.nvim durante instalacion (evita module not found)
 
 ---
 
