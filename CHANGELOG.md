@@ -32,6 +32,8 @@
 - zshrc: glob /opt fix con find (no rompe p10k)
 - bat/batcat: alias condicional segun distribucion
 - Rutas: todas dinamicas con nombre de usuario real
+- Fork bomb: eliminados symlinks en ~/.local/bin que causaban recursion infinita con sudo
+- Scripts de servicios accesibles SOLO via aliases en .zshrc (sin duplicacion en PATH)
 
 ---
 

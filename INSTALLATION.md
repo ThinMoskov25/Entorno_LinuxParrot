@@ -183,10 +183,20 @@ which sxhkd
 ### Funciones no disponibles (command not found)
 ```bash
 source ~/.zshrc
-# o ejecutar:
-bash ~/Desktop/$(whoami)/post_config.sh
-# Opcion 4 -> Enlazar scripts al PATH
 ```
+Los scripts de servicios se acceden via aliases, NO via PATH:
+- `startftp` — Gestor FTP
+- `startssh` — Gestor SSH
+- `startfire` — Gestor Firewall (requiere sudo)
+- `compartidos` — Gestor Samba (requiere sudo)
+
+### "Recurso no disponible temporalmente" (fork bomb)
+Si ocurre, eliminar symlinks residuales:
+```bash
+rm -f ~/.local/bin/gestionar_compartidos ~/.local/bin/startftp
+rm -f ~/.local/bin/startssh ~/.local/bin/startfire ~/.local/bin/open_ftp
+```
+Esto fue corregido en v3.0 final — no deberia ocurrir en instalaciones nuevas.
 
 ### P10k no carga
 ```bash
